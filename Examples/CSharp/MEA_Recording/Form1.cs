@@ -191,6 +191,10 @@ namespace MEA_Recording
                 // Alternative call if you want to select all channels
                 //device.SetSelectedData(block, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
             }
+            else if (useChannelMethod && !useChannelData)
+            {
+                device.SetSelectedChannels(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
+            }
             else
             {
                 device.SetSelectedChannelsQueue(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
@@ -236,12 +240,12 @@ namespace MEA_Recording
                 ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
                 for (int i = 0; i < totalChannels; i++)
                 {
-                    ushort[] data1 = new ushort[channelblocksize];
+                    ushort[] channelData = new ushort[channelblocksize];
                     for (int j = 0; j < channelblocksize; j++)
                     {
-                        data1[j] = data[j * totalChannels + i];
+                        channelData[j] = data[j * totalChannels + i];
                     }
-                    OnChannelDataWithChannelMethodLater(data1, i);
+                    DrawChannelDataWithChannelMethod(channelData, i);
                 }
             }
         }
@@ -257,7 +261,7 @@ namespace MEA_Recording
                     Debug.Assert(totalchannels == 1);
                     Debug.Assert(channels == 1);
                     ushort[] data = device.ChannelBlock_ReadFramesUI16(i, channelblocksize, out int sizeRet);
-                    OnChannelDataWithChannelMethodLater(data, offset);
+                    DrawChannelDataWithChannelMethod(data, offset);
                 }
             }
         }
@@ -268,13 +272,13 @@ namespace MEA_Recording
             if (frames > channelblocksize)
             {
                 Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(0, channelblocksize, out int sizeRet);
-                OnChannelDataWithoutChannelMethodLater(data);
+                DrawChannelDataWithoutChannelMethod(data);
             }
         }
 
         #endregion
 
-        #region No Poll For Data
+        #region Callbacks For Data Retrieval
 
         private void OnChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples)
         {
@@ -298,15 +302,19 @@ namespace MEA_Recording
         private void ChannelDataForChannelMethodAndChannelData()
         {
             device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int offset, out int channels);
+
+            // Get a data frame. This frame contains data from all channels and needs to be "unmixed" manually
             ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
+
             for (int i = 0; i < totalchannels; i++)
             {
-                ushort[] data1 = new ushort[sizeRet];
+                ushort[] channelData = new ushort[sizeRet];
                 for (int j = 0; j < sizeRet; j++)
                 {
-                    data1[j] = data[j * mChannelHandles + i];
+                    channelData[j] = data[j * mChannelHandles + i];
                 }
-                BeginInvoke(new OnChannelDataWithChannelMethodDelegate(OnChannelDataWithChannelMethodLater), data1, i);
+
+                DrawChannelDataWithChannelMethod(channelData, i);
             }
         }
 
@@ -315,14 +323,18 @@ namespace MEA_Recording
             device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int offset, out int channels);
             Debug.Assert(totalchannels == 1);
             Debug.Assert(channels == 1);
+
+            // Get a data frame. This contains the data for the channel with index cbHandle
             ushort[] data = device.ChannelBlock_ReadFramesUI16(cbHandle, numSamples, out int sizeRet);
-            BeginInvoke(new OnChannelDataWithChannelMethodDelegate(OnChannelDataWithChannelMethodLater), data, offset);
+            DrawChannelDataWithChannelMethod(data, cbHandle);
         }
 
         private void ChannelDataWithoutChannelMethod(int cbHandle, int numSamples)
         {
+            // Get the data frame as a dictionary with channel index as the key
             Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(cbHandle, numSamples, out int sizeRet);
-            BeginInvoke(new OnChannelDataWithoutChannelMethodDelegate(OnChannelDataWithoutChannelMethodLater), data);
+            
+            DrawChannelDataWithoutChannelMethod(data);
         }
 
 
@@ -334,21 +346,35 @@ namespace MEA_Recording
 
         #endregion
 
-        private void OnChannelDataWithChannelMethodLater(ushort[] data, int offset)
+        private void DrawChannelDataWithChannelMethod(ushort[] data, int offset)
         {
-            int channel = cbChannel.SelectedIndex;
-            if (channel >= 0 && channel == offset)
+            if (InvokeRequired)
             {
-                DrawChannel(data);
+                BeginInvoke(new OnChannelDataWithChannelMethodDelegate(DrawChannelDataWithChannelMethod), data, offset);
+            }
+            else
+            {
+                int channel = cbChannel.SelectedIndex;
+                if (channel >= 0 && channel == offset)
+                {
+                    DrawChannel(data);
+                }
             }
         }
 
-        void OnChannelDataWithoutChannelMethodLater(Dictionary<int, ushort[]> data)
+        private void DrawChannelDataWithoutChannelMethod(Dictionary<int, ushort[]> data)
         {
-            int channel = cbChannel.SelectedIndex;
-            if (channel >= 0)
+            if (InvokeRequired)
             {
-                DrawChannel(data[channel]);
+                BeginInvoke(new OnChannelDataWithoutChannelMethodDelegate(DrawChannelDataWithoutChannelMethod), data);
+            }
+            else
+            {
+                int channel = cbChannel.SelectedIndex;
+                if (channel >= 0)
+                {
+                    DrawChannel(data[channel]);
+                }
             }
         }
 

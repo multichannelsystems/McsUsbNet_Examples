@@ -35,4 +35,5 @@ It does not contain any support for reading and writing specific MCS file format
 | `\Examples\Matlab\STG_Stimulation` | Stimulation for [STG](https://www.multichannelsystems.com/products/stimulus-generators) devices |
 
 ## Open Issues
-- `.chm` Documentation for current McsUsbNet
+- `.chm` or `.pdf` Documentation for current McsUsbNet
+- LICENSE file

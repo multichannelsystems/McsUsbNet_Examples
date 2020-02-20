@@ -36,5 +36,3 @@ It does not contain any support for reading and writing specific MCS file format
 
 ## Open Issues
 - `.chm` Documentation for current McsUsbNet
-- Documentation for settings in `MEA_Recording`
-- `SetupMemory()` in `STG_Stimulation`

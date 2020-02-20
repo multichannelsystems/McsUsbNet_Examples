@@ -93,7 +93,7 @@ namespace STG_Stimulation
             device.GetCurrentRangeInNanoAmp(0);
             device.GetCurrentResolutionInNanoAmp(0);
 
-            SetupMemory(); // Not necessary if default is sufficient
+            device.SendSegmentSelect(0, Stg200xSegmentFlagsEnumNet.None);
 
             // Setup Trigger
             uint triggerInputs = device.GetNumberOfTriggerInputs();
@@ -233,39 +233,6 @@ namespace STG_Stimulation
             {
                 tbPollValue.Text = status.ToString("X8");
             }
-        }
-
-        private void SetupMemory()
-        {
-            uint memory = device.GetTotalMemory();  // obtain total memory available
-            
-            uint[] segmentmemory = new uint[2];     // each segments has half of total memory
-            segmentmemory[0] = memory / 2;
-            segmentmemory[1] = memory / 2;
-            device.SendSegmentDefine(segmentmemory);// setup the STG
-
-            uint nchannels = device.GetNumberOfAnalogChannels();
-            uint nsync = device.GetNumberOfSyncoutChannels();
-            uint[] channel_cap = new uint[nchannels];
-            uint[] syncout_cap = new uint[nsync];
-            for (int i = 0; i < 2; i++)                             // for each segment
-            {
-                device.SendSegmentSelect((uint)i, 0);                  // switch to segment
-                uint segment_mem = device.GetAvailableMemory();              // get memory available in this segment
-
-                for (int j = 0; j < nchannels; j++)
-                {
-                    channel_cap[j] = segment_mem / (nchannels + nsync); // divide memory amount to all channels
-                }
-                for (int j = 0; j < nsync; j++)
-                {
-                    syncout_cap[j] = segment_mem / (nchannels + nsync); // and all sync outs.
-                }
-
-                //device.SetCapacity(channel_cap, syncout_cap);       // define memory for current segment
-            }
-
-            device.SendSegmentSelect(0, 0);
         }
     }
 }

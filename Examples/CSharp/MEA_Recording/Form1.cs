@@ -13,10 +13,21 @@ namespace MEA_Recording
 
         private readonly CMcsUsbListNet usblist = new CMcsUsbListNet(DeviceEnumNet.MCS_MEA_DEVICE);
         private CMeaDeviceNet device;
+
+        // If true, it is possible to retrieve channel data as a single array and use the useChannelData flag.
+        // If false, the ReadFramesDict call can be used to retrieve the data as a dictionary with channel index as the key
         private bool useChannelMethod;
+
+        // If true, data for multiple channels will be retrieved with a single Read_Frames call
+        // If false, each Read_Frames call will retrieve only a single channel
         private bool useChannelData;
-        private bool usePollForData;
-        private bool useWireless;
+
+        // If true, data is retrieved by (timer-controlled) polling.
+        // If false, callbacks are used to retrieve the data
+        private bool usePollForData; 
+        
+        // This flag should be active for W2100 devices
+        private bool useWireless; 
 
         // The overall number of channels (including data, digital, checksum, timestamp) in one sample. 
         // Checksum and timestamp are not available for MC_Card
@@ -39,10 +50,10 @@ namespace MEA_Recording
             timer.Tick += OnTimerTick;
             timer.Interval = 20;
 
-            checkBoxChannelMethod.Checked = useChannelMethod;
             checkBoxChannelData.Checked = useChannelData;
+            checkBoxChannelData.Enabled = useChannelMethod;
             checkBoxPollForData.Checked = usePollForData;
-            checkBoxWireless.Checked = useWireless;
+            checkBoxChannelMethod.Checked = useChannelMethod;
         }
 
         private void BtMeaDevicePresentClick(object sender, EventArgs e)
@@ -76,24 +87,25 @@ namespace MEA_Recording
             btStart.Enabled = cbDevices.SelectedIndex >= 0;
             btStop.Enabled = false;
 
-            uint sel = (uint)cbDevices.SelectedIndex;
+            var entry = usblist.GetUsbListEntry((uint)cbDevices.SelectedIndex);
             /* choose one of the following constructors:
              * The first one uses the OnNewData callback and gives you a reference to the raw multiplexed data.
              * This could be used without further initialization
              * The second one uses the more advanced callback which gives you the data for each channel in a callback but needs initialization
              * for buffers and the selected channels
              */
-
             if (usePollForData)
             {
-                device = new CMeaDeviceNet(usblist.GetUsbListEntry(sel).DeviceId.BusType);
+                device = new CMeaDeviceNet(entry.DeviceId.BusType);
             }
             else
             {
-                device = new CMeaDeviceNet(usblist.GetUsbListEntry(sel).DeviceId.BusType, OnChannelData, OnError);
+                device = new CMeaDeviceNet(entry.DeviceId.BusType, OnChannelData, OnError);
             }
 
-            device.Connect(usblist.GetUsbListEntry(sel));
+            device.Connect(entry);
+            useWireless = entry.DeviceId.IdProduct == ProductIdEnumNet.W2100;
+            bool isMCCard = entry.DeviceId.IdProduct == ProductIdEnumNet.MC_Card;
 
             if (useWireless)
             {
@@ -138,13 +150,18 @@ namespace MEA_Recording
             }
 
             // Set the range according to the index (only valid for MC_Card)
-            // device.SetVoltageRangeInMicroVoltByIndex(0, 0);
+            if (isMCCard)
+            {
+                device.SetVoltageRangeByIndex(0, 0);
+            }
 
             device.EnableDigitalIn(true, 0);
  
             // Checksum not supported by MC_Card
-            device.EnableChecksum(true, 0);
-
+            if (!isMCCard)
+            {
+                device.EnableChecksum(true, 0);
+            }
 
             // Get the layout to know how the data look like that you receive
             device.GetChannelLayout(out int ana, out int digi, out int che, out int tim, out int block, 0);
@@ -388,11 +405,6 @@ namespace MEA_Recording
             }
         }
 
-        private void CbChannelSelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void Form1FormClosed(object sender, FormClosedEventArgs e)
         {
             if (device != null)
@@ -456,11 +468,6 @@ namespace MEA_Recording
 
         #region Settings
 
-        private void OnCheckBoxWirelessCheckedChanged(object sender, EventArgs e)
-        {
-            useWireless = checkBoxWireless.Checked;
-        }
-
         private void OnCheckBoxPollForDataCheckedChanged(object sender, EventArgs e)
         {
             usePollForData = checkBoxPollForData.Checked;
@@ -474,6 +481,7 @@ namespace MEA_Recording
         private void OnCheckBoxChannelMethodCheckedChanged(object sender, EventArgs e)
         {
             useChannelMethod = checkBoxChannelMethod.Checked;
+            checkBoxChannelData.Enabled = useChannelMethod;
         }
 
         #endregion

@@ -28,6 +28,7 @@ namespace MEA_Recording
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btMeaDevice_present = new System.Windows.Forms.Button();
             this.tbDeviceInfo = new System.Windows.Forms.TextBox();
@@ -40,10 +41,10 @@ namespace MEA_Recording
             this.label3 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.groupBoxSettings = new System.Windows.Forms.GroupBox();
-            this.checkBoxChannelMethod = new System.Windows.Forms.CheckBox();
-            this.checkBoxChannelData = new System.Windows.Forms.CheckBox();
             this.checkBoxPollForData = new System.Windows.Forms.CheckBox();
-            this.checkBoxWireless = new System.Windows.Forms.CheckBox();
+            this.checkBoxChannelData = new System.Windows.Forms.CheckBox();
+            this.checkBoxChannelMethod = new System.Windows.Forms.CheckBox();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.groupBoxSettings.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -123,7 +124,6 @@ namespace MEA_Recording
             this.cbChannel.Name = "cbChannel";
             this.cbChannel.Size = new System.Drawing.Size(70, 21);
             this.cbChannel.TabIndex = 7;
-            this.cbChannel.SelectedIndexChanged += new System.EventHandler(this.CbChannelSelectedIndexChanged);
             // 
             // label3
             // 
@@ -146,38 +146,15 @@ namespace MEA_Recording
             // 
             // groupBoxSettings
             // 
-            this.groupBoxSettings.Controls.Add(this.checkBoxWireless);
             this.groupBoxSettings.Controls.Add(this.checkBoxPollForData);
             this.groupBoxSettings.Controls.Add(this.checkBoxChannelData);
             this.groupBoxSettings.Controls.Add(this.checkBoxChannelMethod);
-            this.groupBoxSettings.Location = new System.Drawing.Point(12, 126);
+            this.groupBoxSettings.Location = new System.Drawing.Point(12, 158);
             this.groupBoxSettings.Name = "groupBoxSettings";
-            this.groupBoxSettings.Size = new System.Drawing.Size(138, 128);
+            this.groupBoxSettings.Size = new System.Drawing.Size(138, 96);
             this.groupBoxSettings.TabIndex = 10;
             this.groupBoxSettings.TabStop = false;
             this.groupBoxSettings.Text = "Settings";
-            // 
-            // checkBoxChannelMethod
-            // 
-            this.checkBoxChannelMethod.AutoSize = true;
-            this.checkBoxChannelMethod.Location = new System.Drawing.Point(17, 21);
-            this.checkBoxChannelMethod.Name = "checkBoxChannelMethod";
-            this.checkBoxChannelMethod.Size = new System.Drawing.Size(104, 17);
-            this.checkBoxChannelMethod.TabIndex = 0;
-            this.checkBoxChannelMethod.Text = "Channel Method";
-            this.checkBoxChannelMethod.UseVisualStyleBackColor = true;
-            this.checkBoxChannelMethod.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelMethodCheckedChanged);
-            // 
-            // checkBoxChannelData
-            // 
-            this.checkBoxChannelData.AutoSize = true;
-            this.checkBoxChannelData.Location = new System.Drawing.Point(17, 45);
-            this.checkBoxChannelData.Name = "checkBoxChannelData";
-            this.checkBoxChannelData.Size = new System.Drawing.Size(91, 17);
-            this.checkBoxChannelData.TabIndex = 1;
-            this.checkBoxChannelData.Text = "Channel Data";
-            this.checkBoxChannelData.UseVisualStyleBackColor = true;
-            this.checkBoxChannelData.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelDataCheckedChanged);
             // 
             // checkBoxPollForData
             // 
@@ -187,19 +164,36 @@ namespace MEA_Recording
             this.checkBoxPollForData.Size = new System.Drawing.Size(87, 17);
             this.checkBoxPollForData.TabIndex = 2;
             this.checkBoxPollForData.Text = "Poll For Data";
+            this.toolTip.SetToolTip(this.checkBoxPollForData, "If active, data will be retrieved by (timer-controlled) polling.\r\nIf incative, da" +
+        "ta will be retrieved by callbacks.");
             this.checkBoxPollForData.UseVisualStyleBackColor = true;
             this.checkBoxPollForData.CheckedChanged += new System.EventHandler(this.OnCheckBoxPollForDataCheckedChanged);
             // 
-            // checkBoxWireless
+            // checkBoxChannelData
             // 
-            this.checkBoxWireless.AutoSize = true;
-            this.checkBoxWireless.Location = new System.Drawing.Point(17, 91);
-            this.checkBoxWireless.Name = "checkBoxWireless";
-            this.checkBoxWireless.Size = new System.Drawing.Size(66, 17);
-            this.checkBoxWireless.TabIndex = 3;
-            this.checkBoxWireless.Text = "Wireless";
-            this.checkBoxWireless.UseVisualStyleBackColor = true;
-            this.checkBoxWireless.CheckedChanged += new System.EventHandler(this.OnCheckBoxWirelessCheckedChanged);
+            this.checkBoxChannelData.AutoSize = true;
+            this.checkBoxChannelData.Location = new System.Drawing.Point(17, 45);
+            this.checkBoxChannelData.Name = "checkBoxChannelData";
+            this.checkBoxChannelData.Size = new System.Drawing.Size(91, 17);
+            this.checkBoxChannelData.TabIndex = 1;
+            this.checkBoxChannelData.Text = "Channel Data";
+            this.toolTip.SetToolTip(this.checkBoxChannelData, "If active, data from all channels will be retrieved with a single call\r\nIf inacti" +
+        "ve, one call per channel is needed to retrieve its data");
+            this.checkBoxChannelData.UseVisualStyleBackColor = true;
+            this.checkBoxChannelData.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelDataCheckedChanged);
+            // 
+            // checkBoxChannelMethod
+            // 
+            this.checkBoxChannelMethod.AutoSize = true;
+            this.checkBoxChannelMethod.Location = new System.Drawing.Point(17, 21);
+            this.checkBoxChannelMethod.Name = "checkBoxChannelMethod";
+            this.checkBoxChannelMethod.Size = new System.Drawing.Size(104, 17);
+            this.checkBoxChannelMethod.TabIndex = 0;
+            this.checkBoxChannelMethod.Text = "Channel Method";
+            this.toolTip.SetToolTip(this.checkBoxChannelMethod, "If active, data will be retrieved as a single array\r\nIf inactive, data will be re" +
+        "trieved as a dictionary of channels");
+            this.checkBoxChannelMethod.UseVisualStyleBackColor = true;
+            this.checkBoxChannelMethod.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelMethodCheckedChanged);
             // 
             // Form1
             // 
@@ -245,9 +239,9 @@ namespace MEA_Recording
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBoxSettings;
         private System.Windows.Forms.CheckBox checkBoxChannelMethod;
-        private System.Windows.Forms.CheckBox checkBoxWireless;
         private System.Windows.Forms.CheckBox checkBoxPollForData;
         private System.Windows.Forms.CheckBox checkBoxChannelData;
+        private System.Windows.Forms.ToolTip toolTip;
     }
 }
 

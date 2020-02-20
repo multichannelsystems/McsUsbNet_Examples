@@ -61,6 +61,8 @@ namespace MEA_Recording
 
         private void CbDevicesSelectedIndexChanged(object sender, EventArgs e)
         {
+            groupBoxSettings.Enabled = false;
+
             if (device != null)
             {
                 device.StopDacq();
@@ -335,8 +337,6 @@ namespace MEA_Recording
 
         private void BtStartClick(object sender, EventArgs e)
         {
-            groupBoxSettings.Enabled = false;
-
             device.StartDacq();
 
             if (useWireless)
@@ -373,8 +373,6 @@ namespace MEA_Recording
             {
                 timer.Enabled = false;
             }
-
-            groupBoxSettings.Enabled = true;
         }
 
         private void SetChannelCombo(int channels)

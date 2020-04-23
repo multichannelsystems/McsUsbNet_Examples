@@ -236,7 +236,7 @@ namespace MEA_Recording
             uint frames = device.ChannelBlock_AvailFrames(0);
             if (frames > channelblocksize)
             {
-                device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int offset, out int channels);
+                device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
                 ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
                 for (int i = 0; i < totalChannels; i++)
                 {
@@ -257,11 +257,11 @@ namespace MEA_Recording
                 uint frames = device.ChannelBlock_AvailFrames(i);
                 if (frames > channelblocksize)
                 {
-                    device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int offset, out int channels);
+                    device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                     Debug.Assert(totalchannels == 1);
                     Debug.Assert(channels == 1);
                     ushort[] data = device.ChannelBlock_ReadFramesUI16(i, channelblocksize, out int sizeRet);
-                    DrawChannelDataWithChannelMethod(data, offset);
+                    DrawChannelDataWithChannelMethod(data, channel_offset);
                 }
             }
         }
@@ -301,7 +301,7 @@ namespace MEA_Recording
 
         private void ChannelDataForChannelMethodAndChannelData()
         {
-            device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int offset, out int channels);
+            device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int vyte_offset, out int channel_offset, out int channels);
 
             // Get a data frame. This frame contains data from all channels and needs to be "unmixed" manually
             ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
@@ -320,7 +320,7 @@ namespace MEA_Recording
 
         private void ChannelDataForChannelMethodWithoutChannelData(int cbHandle, int numSamples)
         {
-            device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int offset, out int channels);
+            device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
             Debug.Assert(totalchannels == 1);
             Debug.Assert(channels == 1);
 

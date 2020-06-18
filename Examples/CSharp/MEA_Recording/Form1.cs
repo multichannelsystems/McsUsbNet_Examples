@@ -35,7 +35,8 @@ namespace MEA_Recording
         private int channelblocksize;
 
         // "Poll For Data" only
-        private Timer timer = new Timer();
+        private System.Timers.Timer timer = new System.Timers.Timer();
+        private int LastData = 0;
 
         // "Channel Method" only
         private int mChannelHandles;
@@ -47,7 +48,7 @@ namespace MEA_Recording
         {
             InitializeComponent();
 
-            timer.Tick += OnTimerTick;
+            timer.Elapsed += OnTimerTick;
             timer.Interval = 20;
 
             checkBoxChannelData.Checked = useChannelData;
@@ -214,6 +215,10 @@ namespace MEA_Recording
 
         private void OnTimerTick(object sender, EventArgs e)
         {
+            if (LastData > 1) // when stoping the dacq, it is set to 10 and so counted down in 10*20ms = 200ms, if 1 data with less then sample size is taken to empty the buffers
+            {
+                LastData--;
+            }
             if (useChannelMethod)
             {
                 if (useChannelData)
@@ -234,14 +239,14 @@ namespace MEA_Recording
         private void TimerTickForChannelMethodAndChannelData()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
-            if (frames > channelblocksize)
+            if ((LastData == 1 || frames > channelblocksize) && frames > 0)
             {
                 device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
                 ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
                 for (int i = 0; i < totalChannels; i++)
                 {
-                    ushort[] channelData = new ushort[channelblocksize];
-                    for (int j = 0; j < channelblocksize; j++)
+                    ushort[] channelData = new ushort[sizeRet];
+                    for (int j = 0; j < sizeRet; j++)
                     {
                         channelData[j] = data[j * totalChannels + i];
                     }
@@ -255,7 +260,7 @@ namespace MEA_Recording
             for (int i = 0; i < mChannelHandles; i++)
             {
                 uint frames = device.ChannelBlock_AvailFrames(i);
-                if (frames > channelblocksize)
+                if ((LastData == 1 || frames > channelblocksize) && frames > 0)
                 {
                     device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                     Debug.Assert(totalchannels == 1);
@@ -269,7 +274,7 @@ namespace MEA_Recording
         private void TimerTickWithoutChannelMethod()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
-            if (frames > channelblocksize)
+            if ((LastData == 1 || frames > channelblocksize) && frames > 0)
             {
                 Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(0, channelblocksize, out int sizeRet);
                 DrawChannelDataWithoutChannelMethod(data);
@@ -395,12 +400,17 @@ namespace MEA_Recording
 
             if (usePollForData)
             {
+                LastData = 0;
                 timer.Enabled = true;
             }
         }
 
         private void BtStopClick(object sender, EventArgs e)
         {
+            if (usePollForData)
+            {
+                LastData = 10;
+            }
             device.StopDacq();
             if (useWireless)
             {

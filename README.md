@@ -10,7 +10,7 @@ It does not contain any support for reading and writing specific MCS file format
 > Please note that you need to have **.NET 4.7.2** installed to interact with the dll.
 
 - Documentation for the McsUsbNet API is located in the `\McsUsbNet\docu` folder
-- Usage examples for the `McsUsbNet.dll` in C#, Python and Matlab are located in the `\Examples\CSharp`, `\Examples\Python` and `\Examples\Mathlab` folders, respectively.
+- Usage examples for the `McsUsbNet.dll` in C#, Python and Matlab are located in the `\Examples\CSharp`, `\Examples\Python` and `\Examples\Matlab` folders, respectively.
 
 ## Example Code
 
@@ -28,9 +28,9 @@ It does not contain any support for reading and writing specific MCS file format
 
 | File | Purpose |
 |--------|---------|
-| `\Examples\Python\Recording.p | Data acquisition from MEA devices |
-| `\Examples\Python\Stimulation.py | Stimulation for [STG](https://www.multichannelsystems.com/products/stimulus-generators) devices |
-| `\Examples\Python\DeviceList.py | Enumerate MCS devices |
+| `\Examples\Python\Recording.py` | Data acquisition from MEA devices |
+| `\Examples\Python\Stimulation.py` | Stimulation for [STG](https://www.multichannelsystems.com/products/stimulus-generators) devices |
+| `\Examples\Python\DeviceList.py` | Enumerate MCS devices |
 
 ### Matlab
 

@@ -42,5 +42,3 @@ It does not contain any support for reading and writing specific MCS file format
 | `\Examples\Matlab\MEA2100_Stimulation` | Stimulation for the MEA2100 device platform |
 | `\Examples\Matlab\STG_Stimulation` | Stimulation for [STG](https://www.multichannelsystems.com/products/stimulus-generators) devices |
 
-## Open Issues
-- `.chm` or `.pdf` Documentation for current McsUsbNet

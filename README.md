@@ -5,9 +5,11 @@ This repository contains the `McsUsbNet.dll` for accessing MCS devices directly,
 It does not contain any support for reading and writing specific MCS file formats like the `MSRD` file format of [Multi Channel Experimenter](https://www.multichannelsystems.com/software/multi-channel-experimenter), the `MCD` file format of [MC_Rack](https://www.multichannelsystems.com/software/mc-rack) or the `STM` file format of [MC_Stimulus II](https://www.multichannelsystems.com/software/mc-stimulus-ii).
 
 ## Repository Structure
-- 32-Bit and 64-Bit binaries of the `McsUsbNet.dll` can be found in the `\McsUsbNet\x86` and  `\McsUsbNet\x64` folders, respectively. 
+- 32-Bit and 64-Bit binaries of the `McsUsbNet.dll` can be found in the `\McsUsbNet\x86` and  `\McsUsbNet\x64` folders, respectively.
  
-> Please note that you need to have **.NET 4.7.2** installed to interact with the dll.
+> Please note that you need to have **.NET Framework 4.7.2** and **Microsoft Visual C++ Redistributable for Visual Studio 2019** installed to interact with the dll.
+
+> Please note as well: If you download this repository as a .zip archive, GitHub doesn't include the McsUsbNet submodule. Please download the [McsUsbNet](https://github.com/multichannelsystems/McsUsbNet) repository as well and copy its contents into the McsUsbNet_Examples/McsUsbNet folder.
 
 - Documentation for the McsUsbNet API is located in the `\McsUsbNet\docu` folder
 - Usage examples for the `McsUsbNet.dll` in C#, Python and Matlab are located in the `\Examples\CSharp`, `\Examples\Python` and `\Examples\Matlab` folders, respectively.

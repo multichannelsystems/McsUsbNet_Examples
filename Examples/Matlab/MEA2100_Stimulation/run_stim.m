@@ -6,7 +6,7 @@ function run_stim(device)
 % The device parameter is created when calling the init_stim script
 
     % Enumerate all connected STG devices
-    deviceList = Mcs.Usb.CMcsUsbListNet(DeviceEnumNet.MCS_STG_DEVICE);
+    deviceList = Mcs.Usb.CMcsUsbListNet(Mcs.Usb.DeviceEnumNet.MCS_STG_DEVICE);
     fprintf('Found %d STGs\n', deviceList.GetNumberOfDevices());
 
     for i=1:deviceList.GetNumberOfDevices()

@@ -23,7 +23,7 @@ function run_stim(device)
         cleanupObj = onCleanup(@()cleanup_stim(device));
         
         % Make sure that the stimulation is stopped
-        device.SendStop();
+        device.SendStop(uint32(1));
         
         % ElectrodeMode: emManual: electrode is permanently selected for stimulation
         stgdevice.SetElectrodeMode(electrode, Mcs.Usb.ElectrodeModeEnumNet.emManual);
@@ -55,7 +55,7 @@ function run_stim(device)
         device.SetupTrigger(0, NET.convertArray(255, 'System.UInt32'), NET.convertArray(255, 'System.UInt32'), NET.convertArray(3, 'System.UInt32'));
 
         % start the first trigger
-        device.SendStart(1);
+        device.SendStart(uint32(1));
     else
         disp ('connection failed');
         disp (dec2hex(status));

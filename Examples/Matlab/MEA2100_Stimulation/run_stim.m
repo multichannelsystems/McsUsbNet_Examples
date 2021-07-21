@@ -26,7 +26,7 @@ function run_stim(device)
         device.SendStop(uint32(1));
         
         % ElectrodeMode: emManual: electrode is permanently selected for stimulation
-        stgdevice.SetElectrodeMode(electrode, Mcs.Usb.ElectrodeModeEnumNet.emManual);
+        device.SetElectrodeMode(electrode, Mcs.Usb.ElectrodeModeEnumNet.emManual);
 
         % ElectrodeDacMux: DAC to use for Stimulation
         device.SetElectrodeDacMux(electrode, 0, Mcs.Usb.ElectrodeDacMuxEnumNet.Stg1);

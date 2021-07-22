@@ -142,9 +142,9 @@ namespace MEA_Recording
             const int Samplingrate = 20000; // MC_Card does not support all settings, please see MC_Rack for valid settings
             device.SetSamplerate(Samplingrate, 1, 0);
             
-            int gain = device.GetGain();
+            int miliGain = device.GetGain();
 
-            device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(out var voltageRanges);
+            var voltageRanges = device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
             for (int i = 0; i < voltageRanges.Count; i++)
             {
                 tbDeviceInfo.Text += @"(" + i.ToString("D") + @") " + voltageRanges[i].VoltageRangeDisplayStringMilliVolt + Environment.NewLine;

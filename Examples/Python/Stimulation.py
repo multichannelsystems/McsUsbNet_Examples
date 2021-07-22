@@ -1,10 +1,11 @@
 import time
+import os
 import clr
 
 from System import Action
 from System import *
 
-clr.AddReference('c:\\Programming\\DllNet\\x64\\Release\\McsUsbNet.dll')
+clr.AddReference(os.getcwd() + '\\..\\..\\McsUsbNet\\x64\\\McsUsbNet.dll')
 from Mcs.Usb import CMcsUsbListNet
 from Mcs.Usb import DeviceEnumNet
 

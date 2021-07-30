@@ -11,7 +11,10 @@ It does not contain any support for reading and writing specific MCS file format
 
 > Please note as well: If you download this repository as a .zip archive, GitHub doesn't include the McsUsbNet submodule. Please download the [McsUsbNet](https://github.com/multichannelsystems/McsUsbNet) repository as well and copy its contents into the McsUsbNet_Examples/McsUsbNet folder.
 
-- Documentation for the McsUsbNet API is located in the `\McsUsbNet\docu` folder
+- Documentation for the McsUsbNet API is located in the `\McsUsbNet\docu` folder. 
+
+> Please note : The dll comes with an xml file `McsUsbNet.xml`, that allows, for example in Visual Studio, to have a **code completion**. We regard this a **part of the documentation** and you should use a tool that allows for code completion at least in parallel to you actual target development system.
+
 - Usage examples for the `McsUsbNet.dll` in C#, Python and Matlab are located in the `\Examples\CSharp`, `\Examples\Python` and `\Examples\Matlab` folders, respectively.
 
 ## Example Code

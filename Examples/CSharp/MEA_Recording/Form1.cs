@@ -35,8 +35,8 @@ namespace MEA_Recording
         private int channelblocksize;
 
         // "Poll For Data" only
-        private System.Timers.Timer timer = new System.Timers.Timer();
-        private int LastData = 0;
+        private Timer timer = new Timer();
+        private bool LastData = false;
 
         // "Channel Method" only
         private int mChannelHandles;
@@ -48,7 +48,7 @@ namespace MEA_Recording
         {
             InitializeComponent();
 
-            timer.Elapsed += OnTimerTick;
+            timer.Tick += Timer_Tick;
             timer.Interval = 20;
 
             checkBoxChannelData.Checked = useChannelData;
@@ -213,12 +213,8 @@ namespace MEA_Recording
 
         #region Poll For Data
 
-        private void OnTimerTick(object sender, EventArgs e)
+        private void Timer_Tick(object sender, EventArgs e)
         {
-            if (LastData > 1) // when stoping the dacq, it is set to 10 and so counted down in 10*20ms = 200ms, if 1 data with less then sample size is taken to empty the buffers
-            {
-                LastData--;
-            }
             if (useChannelMethod)
             {
                 if (useChannelData)
@@ -234,12 +230,17 @@ namespace MEA_Recording
             {
                 TimerTickWithoutChannelMethod();
             }
+
+            while (device.GetErrorMessage(out string errorString, out int info) == 0) // Poll for error messages in the dacq threads
+            {
+                OnError(errorString, info);
+            }
         }
 
         private void TimerTickForChannelMethodAndChannelData()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
-            if ((LastData == 1 || frames > channelblocksize) && frames > 0)
+            if ((LastData || frames > channelblocksize) && frames > 0)
             {
                 device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
                 ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
@@ -260,7 +261,7 @@ namespace MEA_Recording
             for (int i = 0; i < mChannelHandles; i++)
             {
                 uint frames = device.ChannelBlock_AvailFrames(i);
-                if ((LastData == 1 || frames > channelblocksize) && frames > 0)
+                if ((LastData || frames > channelblocksize) && frames > 0)
                 {
                     device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                     Debug.Assert(totalchannels == 1);
@@ -274,7 +275,7 @@ namespace MEA_Recording
         private void TimerTickWithoutChannelMethod()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
-            if ((LastData == 1 || frames > channelblocksize) && frames > 0)
+            if ((LastData || frames > channelblocksize) && frames > 0)
             {
                 Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(0, channelblocksize, out int sizeRet);
                 DrawChannelDataWithoutChannelMethod(data);
@@ -345,8 +346,14 @@ namespace MEA_Recording
 
         private void OnError(string msg, int info)
         {
-            device.StopDacq();
-//            MessageBox.Show(@"Mea Device Error: " + msg);
+            if (InvokeRequired)
+            {
+                BeginInvoke(new OnError(OnError), msg, info);
+            }
+            else
+            {
+                listBoxErrors.Items.Add(msg);
+            }
         }
 
         #endregion
@@ -385,6 +392,8 @@ namespace MEA_Recording
 
         private void BtStartClick(object sender, EventArgs e)
         {
+            listBoxErrors.Items.Clear();
+
             device.StartDacq();
 
             if (useWireless)
@@ -400,7 +409,7 @@ namespace MEA_Recording
 
             if (usePollForData)
             {
-                LastData = 0;
+                LastData = false;
                 timer.Enabled = true;
             }
         }
@@ -409,9 +418,16 @@ namespace MEA_Recording
         {
             if (usePollForData)
             {
-                LastData = 10;
+                LastData = true;
+                device.SendStopDacq(); // StopDacq needs to be split into separate calls: SendStopDacq 
+                System.Threading.Thread.Sleep(200);
+                Timer_Tick(null, null);
+                device.StopLoop();
             }
-            device.StopDacq();
+            else
+            {
+                device.StopDacq();
+            }
             if (useWireless)
             {
                 CW2100_FunctionNet func = new CW2100_FunctionNet(device);
@@ -518,6 +534,10 @@ namespace MEA_Recording
         {
             useChannelMethod = checkBoxChannelMethod.Checked;
             checkBoxChannelData.Enabled = useChannelMethod;
+            if (!useChannelMethod)
+            {
+                checkBoxChannelData.Checked = false;
+            }
         }
 
         #endregion

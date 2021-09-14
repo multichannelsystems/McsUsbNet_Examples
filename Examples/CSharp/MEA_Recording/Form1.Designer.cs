@@ -45,6 +45,7 @@ namespace MEA_Recording
             this.checkBoxChannelData = new System.Windows.Forms.CheckBox();
             this.checkBoxChannelMethod = new System.Windows.Forms.CheckBox();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.listBoxErrors = new System.Windows.Forms.ListBox();
             this.groupBoxSettings.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -195,11 +196,20 @@ namespace MEA_Recording
             this.checkBoxChannelMethod.UseVisualStyleBackColor = true;
             this.checkBoxChannelMethod.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelMethodCheckedChanged);
             // 
+            // listBoxErrors
+            // 
+            this.listBoxErrors.FormattingEnabled = true;
+            this.listBoxErrors.Location = new System.Drawing.Point(677, 12);
+            this.listBoxErrors.Name = "listBoxErrors";
+            this.listBoxErrors.Size = new System.Drawing.Size(170, 251);
+            this.listBoxErrors.TabIndex = 11;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(683, 273);
+            this.ClientSize = new System.Drawing.Size(859, 273);
+            this.Controls.Add(this.listBoxErrors);
             this.Controls.Add(this.groupBoxSettings);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label3);
@@ -242,6 +252,7 @@ namespace MEA_Recording
         private System.Windows.Forms.CheckBox checkBoxPollForData;
         private System.Windows.Forms.CheckBox checkBoxChannelData;
         private System.Windows.Forms.ToolTip toolTip;
+        private System.Windows.Forms.ListBox listBoxErrors;
     }
 }
 

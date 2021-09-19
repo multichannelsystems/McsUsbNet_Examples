@@ -1,9 +1,12 @@
 import time
 import os
 import clr
+import ctypes
 
 from System import Action
 from System import *
+
+from clr_array_to_numpy import asNumpyArray
 
 clr.AddReference(os.getcwd() + '\\..\\..\\McsUsbNet\\x64\\\McsUsbNet.dll')
 from Mcs.Usb import CMcsUsbListNet
@@ -15,8 +18,9 @@ from Mcs.Usb import DataModeEnumNet
 from Mcs.Usb import SampleSizeNet
 
 def OnChannelData(x, cbHandle, numSamples):
-    data, size = device.ChannelBlock_ReadFramesUI16(0, 5000, Int32(0));
-    print("size: %d numSamples: %d Data: %04x %04x Checksum: %04x %04x %04x %04x" % (size, numSamples, data[0], data[1], data[2], data[3], data[4], data[5]))
+    data, frames_ret = device.ChannelBlock_ReadFramesUI16(0, 5000, Int32(0));
+    np_data = asNumpyArray(data, ctypes.c_uint16)
+    print(".Net numSamples: %d frames_ret: %d size: %d Data: %04x %04x Checksum: %04x %04x %04x %04x" % (numSamples, frames_ret, len(np_data), np_data[0], np_data[1], np_data[2], np_data[3], np_data[4], np_data[5]))
     
 def OnError(msg, info):
     print(msg, info)

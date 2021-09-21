@@ -14,10 +14,6 @@ namespace MEA_Recording
         private readonly CMcsUsbListNet usblist = new CMcsUsbListNet(DeviceEnumNet.MCS_MEA_DEVICE);
         private CMeaDeviceNet device;
 
-        // If true, it is possible to retrieve channel data as a single array and use the useChannelData flag.
-        // If false, the ReadFramesDict call can be used to retrieve the data as a dictionary with channel index as the key
-        private bool useChannelMethod;
-
         // If true, data for multiple channels will be retrieved with a single Read_Frames call
         // If false, each Read_Frames call will retrieve only a single channel
         private bool useChannelData;
@@ -52,9 +48,7 @@ namespace MEA_Recording
             timer.Interval = 20;
 
             checkBoxChannelData.Checked = useChannelData;
-            checkBoxChannelData.Enabled = useChannelMethod;
             checkBoxPollForData.Checked = usePollForData;
-            checkBoxChannelMethod.Checked = useChannelMethod;
         }
 
         private void BtMeaDevicePresentClick(object sender, EventArgs e)
@@ -184,21 +178,13 @@ namespace MEA_Recording
             }
             mChannelHandles = block; // for this case, if all channels are selected
             // queue size and threshold should be selected carefully
-            if (useChannelMethod && useChannelData)
+            if (useChannelData)
             {
                 device.SetSelectedData(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
-                //device.AddSelectedChannelsQueue(10, 2, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned);
-                //device.ChannelBlock_SetCommonThreshold(channelblocksize);
-                // Alternative call if you want to select all channels
-                //device.SetSelectedData(block, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
             }
-            else if (useChannelMethod && !useChannelData)
+            else // (!useChannelData)
             {
                 device.SetSelectedChannels(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
-            }
-            else
-            {
-                device.SetSelectedChannelsQueue(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
             }
 
             device.ChannelBlock_SetCheckChecksum((uint)che, (uint)tim);
@@ -208,27 +194,19 @@ namespace MEA_Recording
          * Please note, it is an error to use both data receiving callbacks at a time unless you know want you are doing
          */
 
-        delegate void OnChannelDataWithChannelMethodDelegate(ushort[] data, int offset);
-        delegate void OnChannelDataWithoutChannelMethodDelegate(Dictionary<int, ushort[]> data);
+        delegate void OnChannelDataDelegate(ushort[] data, int offset);
 
         #region Poll For Data
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (useChannelMethod)
+            if (useChannelData)
             {
-                if (useChannelData)
-                {
-                    TimerTickForChannelMethodAndChannelData();
-                }
-                else
-                {
-                    TimerTickForChannelMethodWithoutChannelData();
-                }
+                TimerTickForChannelData();
             }
             else
             {
-                TimerTickWithoutChannelMethod();
+                TimerTickWithoutChannelData();
             }
 
             while (device.GetErrorMessage(out string errorString, out int info) == 0) // Poll for error messages in the dacq threads
@@ -237,7 +215,7 @@ namespace MEA_Recording
             }
         }
 
-        private void TimerTickForChannelMethodAndChannelData()
+        private void TimerTickForChannelData()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
             if ((LastData || frames > channelblocksize) && frames > 0)
@@ -251,12 +229,12 @@ namespace MEA_Recording
                     {
                         channelData[j] = data[j * totalChannels + i];
                     }
-                    DrawChannelDataWithChannelMethod(channelData, i);
+                    DrawChannelData(channelData, i);
                 }
             }
         }
 
-        private void TimerTickForChannelMethodWithoutChannelData()
+        private void TimerTickWithoutChannelData()
         {
             for (int i = 0; i < mChannelHandles; i++)
             {
@@ -267,18 +245,8 @@ namespace MEA_Recording
                     Debug.Assert(totalchannels == 1);
                     Debug.Assert(channels == 1);
                     ushort[] data = device.ChannelBlock_ReadFramesUI16(i, channelblocksize, out int sizeRet);
-                    DrawChannelDataWithChannelMethod(data, channel_offset);
+                    DrawChannelData(data, channel_offset);
                 }
-            }
-        }
-
-        private void TimerTickWithoutChannelMethod()
-        {
-            uint frames = device.ChannelBlock_AvailFrames(0);
-            if ((LastData || frames > channelblocksize) && frames > 0)
-            {
-                Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(0, channelblocksize, out int sizeRet);
-                DrawChannelDataWithoutChannelMethod(data);
             }
         }
 
@@ -288,24 +256,17 @@ namespace MEA_Recording
 
         private void OnChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples)
         {
-            if (useChannelMethod)
+            if (useChannelData)
             {
-                if (useChannelData)
-                {
-                    ChannelDataForChannelMethodAndChannelData();
-                }
-                else
-                {
-                    ChannelDataForChannelMethodWithoutChannelData(cbHandle, numSamples);
-                }
+                ChannelDataForChannelData();
             }
             else
             {
-                ChannelDataWithoutChannelMethod(cbHandle, numSamples);
+                ChannelDataWithoutChannelData(cbHandle, numSamples);
             }
         }
 
-        private void ChannelDataForChannelMethodAndChannelData()
+        private void ChannelDataForChannelData()
         {
             device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int vyte_offset, out int channel_offset, out int channels);
 
@@ -320,11 +281,11 @@ namespace MEA_Recording
                     channelData[j] = data[j * mChannelHandles + i];
                 }
 
-                DrawChannelDataWithChannelMethod(channelData, i);
+                DrawChannelData(channelData, i);
             }
         }
 
-        private void ChannelDataForChannelMethodWithoutChannelData(int cbHandle, int numSamples)
+        private void ChannelDataWithoutChannelData(int cbHandle, int numSamples)
         {
             device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
             Debug.Assert(totalchannels == 1);
@@ -332,17 +293,8 @@ namespace MEA_Recording
 
             // Get a data frame. This contains the data for the channel with index cbHandle
             ushort[] data = device.ChannelBlock_ReadFramesUI16(cbHandle, numSamples, out int sizeRet);
-            DrawChannelDataWithChannelMethod(data, cbHandle);
+            DrawChannelData(data, cbHandle);
         }
-
-        private void ChannelDataWithoutChannelMethod(int cbHandle, int numSamples)
-        {
-            // Get the data frame as a dictionary with channel index as the key
-            Dictionary<int, ushort[]> data = device.ChannelBlock_ReadFramesDictUI16(cbHandle, numSamples, out int sizeRet);
-            
-            DrawChannelDataWithoutChannelMethod(data);
-        }
-
 
         private void OnError(string msg, int info)
         {
@@ -358,11 +310,11 @@ namespace MEA_Recording
 
         #endregion
 
-        private void DrawChannelDataWithChannelMethod(ushort[] data, int offset)
+        private void DrawChannelData(ushort[] data, int offset)
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new OnChannelDataWithChannelMethodDelegate(DrawChannelDataWithChannelMethod), data, offset);
+                BeginInvoke(new OnChannelDataDelegate(DrawChannelData), data, offset);
             }
             else
             {
@@ -370,22 +322,6 @@ namespace MEA_Recording
                 if (channel >= 0 && channel == offset)
                 {
                     DrawChannel(data);
-                }
-            }
-        }
-
-        private void DrawChannelDataWithoutChannelMethod(Dictionary<int, ushort[]> data)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new OnChannelDataWithoutChannelMethodDelegate(DrawChannelDataWithoutChannelMethod), data);
-            }
-            else
-            {
-                int channel = cbChannel.SelectedIndex;
-                if (channel >= 0)
-                {
-                    DrawChannel(data[channel]);
                 }
             }
         }
@@ -528,16 +464,6 @@ namespace MEA_Recording
         private void OnCheckBoxChannelDataCheckedChanged(object sender, EventArgs e)
         {
             useChannelData = checkBoxChannelData.Checked;
-        }
-
-        private void OnCheckBoxChannelMethodCheckedChanged(object sender, EventArgs e)
-        {
-            useChannelMethod = checkBoxChannelMethod.Checked;
-            checkBoxChannelData.Enabled = useChannelMethod;
-            if (!useChannelMethod)
-            {
-                checkBoxChannelData.Checked = false;
-            }
         }
 
         #endregion

@@ -43,7 +43,6 @@ namespace MEA_Recording
             this.groupBoxSettings = new System.Windows.Forms.GroupBox();
             this.checkBoxPollForData = new System.Windows.Forms.CheckBox();
             this.checkBoxChannelData = new System.Windows.Forms.CheckBox();
-            this.checkBoxChannelMethod = new System.Windows.Forms.CheckBox();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.listBoxErrors = new System.Windows.Forms.ListBox();
             this.groupBoxSettings.SuspendLayout();
@@ -149,10 +148,9 @@ namespace MEA_Recording
             // 
             this.groupBoxSettings.Controls.Add(this.checkBoxPollForData);
             this.groupBoxSettings.Controls.Add(this.checkBoxChannelData);
-            this.groupBoxSettings.Controls.Add(this.checkBoxChannelMethod);
-            this.groupBoxSettings.Location = new System.Drawing.Point(12, 158);
+            this.groupBoxSettings.Location = new System.Drawing.Point(12, 187);
             this.groupBoxSettings.Name = "groupBoxSettings";
-            this.groupBoxSettings.Size = new System.Drawing.Size(138, 96);
+            this.groupBoxSettings.Size = new System.Drawing.Size(138, 67);
             this.groupBoxSettings.TabIndex = 10;
             this.groupBoxSettings.TabStop = false;
             this.groupBoxSettings.Text = "Settings";
@@ -160,7 +158,7 @@ namespace MEA_Recording
             // checkBoxPollForData
             // 
             this.checkBoxPollForData.AutoSize = true;
-            this.checkBoxPollForData.Location = new System.Drawing.Point(17, 68);
+            this.checkBoxPollForData.Location = new System.Drawing.Point(6, 42);
             this.checkBoxPollForData.Name = "checkBoxPollForData";
             this.checkBoxPollForData.Size = new System.Drawing.Size(87, 17);
             this.checkBoxPollForData.TabIndex = 2;
@@ -173,7 +171,7 @@ namespace MEA_Recording
             // checkBoxChannelData
             // 
             this.checkBoxChannelData.AutoSize = true;
-            this.checkBoxChannelData.Location = new System.Drawing.Point(17, 45);
+            this.checkBoxChannelData.Location = new System.Drawing.Point(6, 19);
             this.checkBoxChannelData.Name = "checkBoxChannelData";
             this.checkBoxChannelData.Size = new System.Drawing.Size(91, 17);
             this.checkBoxChannelData.TabIndex = 1;
@@ -182,19 +180,6 @@ namespace MEA_Recording
         "ve, one call per channel is needed to retrieve its data");
             this.checkBoxChannelData.UseVisualStyleBackColor = true;
             this.checkBoxChannelData.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelDataCheckedChanged);
-            // 
-            // checkBoxChannelMethod
-            // 
-            this.checkBoxChannelMethod.AutoSize = true;
-            this.checkBoxChannelMethod.Location = new System.Drawing.Point(17, 21);
-            this.checkBoxChannelMethod.Name = "checkBoxChannelMethod";
-            this.checkBoxChannelMethod.Size = new System.Drawing.Size(104, 17);
-            this.checkBoxChannelMethod.TabIndex = 0;
-            this.checkBoxChannelMethod.Text = "Channel Method";
-            this.toolTip.SetToolTip(this.checkBoxChannelMethod, "If active, data will be retrieved as a single array\r\nIf inactive, data will be re" +
-        "trieved as a dictionary of channels");
-            this.checkBoxChannelMethod.UseVisualStyleBackColor = true;
-            this.checkBoxChannelMethod.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelMethodCheckedChanged);
             // 
             // listBoxErrors
             // 
@@ -248,7 +233,6 @@ namespace MEA_Recording
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBoxSettings;
-        private System.Windows.Forms.CheckBox checkBoxChannelMethod;
         private System.Windows.Forms.CheckBox checkBoxPollForData;
         private System.Windows.Forms.CheckBox checkBoxChannelData;
         private System.Windows.Forms.ToolTip toolTip;

@@ -31,6 +31,9 @@ It does not contain any support for reading and writing specific MCS file format
 
 ### Python
 
+> All examples require **.NET 4.7.2** or later.
+> Tested with Python 3, use `pip install pythonnet`
+
 | File | Purpose |
 |--------|---------|
 | `\Examples\Python\Recording.py` | Data acquisition from MEA devices |

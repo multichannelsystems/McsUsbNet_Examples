@@ -41,10 +41,14 @@ namespace MEA_Recording
             this.label3 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.groupBoxSettings = new System.Windows.Forms.GroupBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.comboBoxDataSelectionMethod = new System.Windows.Forms.ComboBox();
+            this.checkBoxCommonThreshold = new System.Windows.Forms.CheckBox();
             this.checkBoxPollForData = new System.Windows.Forms.CheckBox();
-            this.checkBoxChannelData = new System.Windows.Forms.CheckBox();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.listBoxErrors = new System.Windows.Forms.ListBox();
+            this.comboBoxDataMode = new System.Windows.Forms.ComboBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.groupBoxSettings.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -146,19 +150,55 @@ namespace MEA_Recording
             // 
             // groupBoxSettings
             // 
+            this.groupBoxSettings.Controls.Add(this.label5);
+            this.groupBoxSettings.Controls.Add(this.comboBoxDataMode);
+            this.groupBoxSettings.Controls.Add(this.label4);
+            this.groupBoxSettings.Controls.Add(this.comboBoxDataSelectionMethod);
+            this.groupBoxSettings.Controls.Add(this.checkBoxCommonThreshold);
             this.groupBoxSettings.Controls.Add(this.checkBoxPollForData);
-            this.groupBoxSettings.Controls.Add(this.checkBoxChannelData);
-            this.groupBoxSettings.Location = new System.Drawing.Point(12, 187);
+            this.groupBoxSettings.Location = new System.Drawing.Point(12, 104);
             this.groupBoxSettings.Name = "groupBoxSettings";
-            this.groupBoxSettings.Size = new System.Drawing.Size(138, 67);
+            this.groupBoxSettings.Size = new System.Drawing.Size(166, 157);
             this.groupBoxSettings.TabIndex = 10;
             this.groupBoxSettings.TabStop = false;
             this.groupBoxSettings.Text = "Settings";
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(3, 16);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(116, 13);
+            this.label4.TabIndex = 13;
+            this.label4.Text = "Data Selection Method";
+            // 
+            // comboBoxDataSelectionMethod
+            // 
+            this.comboBoxDataSelectionMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxDataSelectionMethod.FormattingEnabled = true;
+            this.comboBoxDataSelectionMethod.Location = new System.Drawing.Point(6, 32);
+            this.comboBoxDataSelectionMethod.Name = "comboBoxDataSelectionMethod";
+            this.comboBoxDataSelectionMethod.Size = new System.Drawing.Size(150, 21);
+            this.comboBoxDataSelectionMethod.TabIndex = 12;
+            this.comboBoxDataSelectionMethod.SelectedIndexChanged += new System.EventHandler(this.comboBoxDataSelectionMethod_SelectedIndexChanged);
+            // 
+            // checkBoxCommonThreshold
+            // 
+            this.checkBoxCommonThreshold.AutoSize = true;
+            this.checkBoxCommonThreshold.Location = new System.Drawing.Point(6, 122);
+            this.checkBoxCommonThreshold.Name = "checkBoxCommonThreshold";
+            this.checkBoxCommonThreshold.Size = new System.Drawing.Size(117, 17);
+            this.checkBoxCommonThreshold.TabIndex = 3;
+            this.checkBoxCommonThreshold.Text = "Common Threshold";
+            this.toolTip.SetToolTip(this.checkBoxCommonThreshold, "If active, data will be retrieved by (timer-controlled) polling.\r\nIf incative, da" +
+        "ta will be retrieved by callbacks.");
+            this.checkBoxCommonThreshold.UseVisualStyleBackColor = true;
+            this.checkBoxCommonThreshold.CheckedChanged += new System.EventHandler(this.checkBoxCommonThreshold_CheckedChanged);
+            // 
             // checkBoxPollForData
             // 
             this.checkBoxPollForData.AutoSize = true;
-            this.checkBoxPollForData.Location = new System.Drawing.Point(6, 42);
+            this.checkBoxPollForData.Location = new System.Drawing.Point(6, 99);
             this.checkBoxPollForData.Name = "checkBoxPollForData";
             this.checkBoxPollForData.Size = new System.Drawing.Size(87, 17);
             this.checkBoxPollForData.TabIndex = 2;
@@ -168,19 +208,6 @@ namespace MEA_Recording
             this.checkBoxPollForData.UseVisualStyleBackColor = true;
             this.checkBoxPollForData.CheckedChanged += new System.EventHandler(this.OnCheckBoxPollForDataCheckedChanged);
             // 
-            // checkBoxChannelData
-            // 
-            this.checkBoxChannelData.AutoSize = true;
-            this.checkBoxChannelData.Location = new System.Drawing.Point(6, 19);
-            this.checkBoxChannelData.Name = "checkBoxChannelData";
-            this.checkBoxChannelData.Size = new System.Drawing.Size(91, 17);
-            this.checkBoxChannelData.TabIndex = 1;
-            this.checkBoxChannelData.Text = "Channel Data";
-            this.toolTip.SetToolTip(this.checkBoxChannelData, "If active, data from all channels will be retrieved with a single call\r\nIf inacti" +
-        "ve, one call per channel is needed to retrieve its data");
-            this.checkBoxChannelData.UseVisualStyleBackColor = true;
-            this.checkBoxChannelData.CheckedChanged += new System.EventHandler(this.OnCheckBoxChannelDataCheckedChanged);
-            // 
             // listBoxErrors
             // 
             this.listBoxErrors.FormattingEnabled = true;
@@ -188,6 +215,25 @@ namespace MEA_Recording
             this.listBoxErrors.Name = "listBoxErrors";
             this.listBoxErrors.Size = new System.Drawing.Size(170, 251);
             this.listBoxErrors.TabIndex = 11;
+            // 
+            // comboBoxDataMode
+            // 
+            this.comboBoxDataMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxDataMode.FormattingEnabled = true;
+            this.comboBoxDataMode.Location = new System.Drawing.Point(6, 72);
+            this.comboBoxDataMode.Name = "comboBoxDataMode";
+            this.comboBoxDataMode.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxDataMode.TabIndex = 12;
+            this.comboBoxDataMode.SelectedIndexChanged += new System.EventHandler(this.comboBoxDataMode_SelectedIndexChanged);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(3, 56);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(57, 13);
+            this.label5.TabIndex = 13;
+            this.label5.Text = "DataMode";
             // 
             // Form1
             // 
@@ -234,9 +280,13 @@ namespace MEA_Recording
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBoxSettings;
         private System.Windows.Forms.CheckBox checkBoxPollForData;
-        private System.Windows.Forms.CheckBox checkBoxChannelData;
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.ListBox listBoxErrors;
+        private System.Windows.Forms.CheckBox checkBoxCommonThreshold;
+        private System.Windows.Forms.ComboBox comboBoxDataSelectionMethod;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.ComboBox comboBoxDataMode;
+        private System.Windows.Forms.Label label5;
     }
 }
 

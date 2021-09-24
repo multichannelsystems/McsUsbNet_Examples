@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MeaExampleNet")]
+[assembly: AssemblyTitle("MEA_Recording")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Multi Channel Systems MCS GmbH")]
-[assembly: AssemblyProduct("MeaExampleNet")]
-[assembly: AssemblyCopyright("Copyright © 2009 Multi Channel Systems")]
+[assembly: AssemblyProduct("MEA Recording")]
+[assembly: AssemblyCopyright("Copyright © 2021 Multi Channel Systems")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -14,41 +14,66 @@ namespace MEA_Recording
         private readonly CMcsUsbListNet usblist = new CMcsUsbListNet(DeviceEnumNet.MCS_MEA_DEVICE);
         private CMeaDeviceNet device;
 
-        // If true, data for multiple channels will be retrieved with a single Read_Frames call
-        // If false, each Read_Frames call will retrieve only a single channel
-        private bool useChannelData;
+        enum DataSelectionMethod
+        {
+            SetSelectedChannels,
+            SetSelectedData,
+        }
+        // If setSelectedChannels or SetSelectedData is used
+        private DataSelectionMethod dataSelectionMethod = DataSelectionMethod.SetSelectedChannels;
 
         // If true, data is retrieved by (timer-controlled) polling.
         // If false, callbacks are used to retrieve the data
-        private bool usePollForData; 
-        
+        private bool usePollForData;
+
+        // Only for DataSelectionMethod dataSelectionMethod == DataSelectionMethod.selectedChannels;
+        // If true, all handles are checked for the threshold
+        // If false, each handle has an individual threshold
+        private bool useCommonThreshold;
+
         // This flag should be active for W2100 devices
-        private bool useWireless; 
+        private bool useWireless;
+
+        private DataModeEnumNet dataMode = DataModeEnumNet.Unsigned_16bit;
+        //private DataModeEnumNet dataMode = DataModeEnumNet.Signed_32bit;
 
         // The overall number of channels (including data, digital, checksum, timestamp) in one sample. 
         // Checksum and timestamp are not available for MC_Card
         // With the MC_Card you lose one analog channel, when using the digital channel 
-        private int channelblocksize;
+        private int callbackThreshold;
 
         // "Poll For Data" only
         private Timer timer = new Timer();
         private bool LastData = false;
 
-        // "Channel Method" only
-        private int mChannelHandles;
+        // useChannelData == false only
+        private int mChannels;
 
         // for drawing
-        private ushort[] mData;
+        private double[] mData;
+
+        Dictionary<DataModeEnumNet, SampleSizeNet> DataModeToSampleSizeDict = new Dictionary<DataModeEnumNet, SampleSizeNet>();
 
         public Form1()
         {
+            DataModeToSampleSizeDict.Add(DataModeEnumNet.Unsigned_16bit, SampleSizeNet.SampleSize16Unsigned);
+            DataModeToSampleSizeDict.Add(DataModeEnumNet.Signed_32bit, SampleSizeNet.SampleSize32Signed);
+
             InitializeComponent();
+
+            comboBoxDataSelectionMethod.Items.Add(DataSelectionMethod.SetSelectedChannels);
+            comboBoxDataSelectionMethod.Items.Add(DataSelectionMethod.SetSelectedData);
+
+            comboBoxDataMode.Items.Add(DataModeEnumNet.Unsigned_16bit);
+            comboBoxDataMode.Items.Add(DataModeEnumNet.Signed_32bit);
 
             timer.Tick += Timer_Tick;
             timer.Interval = 20;
 
-            checkBoxChannelData.Checked = useChannelData;
+            comboBoxDataSelectionMethod.SelectedItem = dataSelectionMethod;
             checkBoxPollForData.Checked = usePollForData;
+            checkBoxCommonThreshold.Checked = useCommonThreshold;
+            comboBoxDataMode.SelectedItem = dataMode;
         }
 
         private void BtMeaDevicePresentClick(object sender, EventArgs e)
@@ -122,6 +147,9 @@ namespace MEA_Recording
 
             tbDeviceInfo.Text = "";
             tbDeviceInfo.Text += "Serial number: " + device.SerialNumber + Environment.NewLine;
+
+            device.SetDataMode(dataMode, 0);
+
             device.HWInfo().GetNumberOfHWADCChannels(out int hwchannels);
             tbDeviceInfo.Text += @"Number of Hardware channels: " + hwchannels.ToString("D") + Environment.NewLine;
 
@@ -145,10 +173,7 @@ namespace MEA_Recording
             }
 
             // Set the range according to the index (only valid for MC_Card)
-            if (isMCCard)
-            {
-                device.SetVoltageRangeByIndex(0, 0);
-            }
+            device.SetVoltageRangeByIndex(0, 0); // for dataMode == DataModeEnumNet.Signed_32bit only one index exists
 
             device.EnableDigitalIn(true, 0);
  
@@ -164,27 +189,33 @@ namespace MEA_Recording
             // or
             block = device.GetChannelsInBlock(0);
 
+            if (dataMode == DataModeEnumNet.Unsigned_16bit)
+            {
+                mChannels = block; // for this case, if all channels are selected
+            }
+            else // (dataMode == DataModeEnumNet.Signed_32bit)
+            {
+                mChannels = block / 2; // for this case, if all channels are selected
+            }
+
             // set the channel combo box with the channels
-            SetChannelCombo(block);
+            SetChannelCombo(mChannels);
 
-            channelblocksize = Samplingrate / 10; // good choice for MC_Card
+            callbackThreshold = Samplingrate / 10; // good choice for MC_Card and others
 
-            bool[] selChannels = new bool[block];
-
-            for (int i = 0; i < block; i++)
-            {
-                selChannels[i] = true; // With true channel i is selected
-                // selChannels[i] = false; // With false the channel i is deselected
-            }
-            mChannelHandles = block; // for this case, if all channels are selected
             // queue size and threshold should be selected carefully
-            if (useChannelData)
+            if (dataSelectionMethod == DataSelectionMethod.SetSelectedData)
             {
-                device.SetSelectedData(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
+                device.SetSelectedData(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], block);
             }
-            else // (!useChannelData)
+            else // (dataSelectionMethod == DataSelectionMethod.SetSelectedChannels)
             {
-                device.SetSelectedChannels(selChannels, 10 * channelblocksize, channelblocksize, SampleSizeNet.SampleSize16Unsigned, block);
+                device.SetSelectedChannels(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], block);
+
+                if (useCommonThreshold)
+                {
+                    device.ChannelBlock_SetCommonThreshold(callbackThreshold);
+                }
             }
 
             device.ChannelBlock_SetCheckChecksum((uint)che, (uint)tim);
@@ -194,13 +225,14 @@ namespace MEA_Recording
          * Please note, it is an error to use both data receiving callbacks at a time unless you know want you are doing
          */
 
-        delegate void OnChannelDataDelegate(ushort[] data, int offset);
+        delegate void OnChannelDataDelegateUI16(ushort[] data, int offset);
+        delegate void OnChannelDataDelegateI32(int[] data, int offset);
 
         #region Poll For Data
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (useChannelData)
+            if (dataSelectionMethod == DataSelectionMethod.SetSelectedData)
             {
                 TimerTickForChannelData();
             }
@@ -218,34 +250,68 @@ namespace MEA_Recording
         private void TimerTickForChannelData()
         {
             uint frames = device.ChannelBlock_AvailFrames(0);
-            if ((LastData || frames > channelblocksize) && frames > 0)
+            if ((LastData || frames > callbackThreshold) && frames > 0)
             {
                 device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
-                ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
-                for (int i = 0; i < totalChannels; i++)
+                if (dataMode == DataModeEnumNet.Unsigned_16bit)
                 {
-                    ushort[] channelData = new ushort[sizeRet];
-                    for (int j = 0; j < sizeRet; j++)
+                    ushort[] data = device.ChannelBlock_ReadFramesUI16(0, callbackThreshold, out int sizeRet);
+                    for (int i = 0; i < totalChannels; i++)
                     {
-                        channelData[j] = data[j * totalChannels + i];
+                        ushort[] channelData = new ushort[sizeRet];
+                        for (int j = 0; j < sizeRet; j++)
+                        {
+                            channelData[j] = data[j * totalChannels + i];
+                        }
+
+                        DrawChannelData(channelData, i);
                     }
-                    DrawChannelData(channelData, i);
+                }
+                else // (dataMode == DataModeEnumNet.Signed_32bit)
+                {
+                    int[] data = device.ChannelBlock_ReadFramesI32(0, callbackThreshold, out int sizeRet);
+                    for (int i = 0; i < totalChannels; i++)
+                    {
+                        int[] channelData = new int[sizeRet];
+                        for (int j = 0; j < sizeRet; j++)
+                        {
+                            channelData[j] = data[j * totalChannels + i];
+                        }
+
+                        DrawChannelData(channelData, i);
+                    }
                 }
             }
         }
 
         private void TimerTickWithoutChannelData()
         {
-            for (int i = 0; i < mChannelHandles; i++)
+            uint frames = 0;
+            if (useCommonThreshold)
             {
-                uint frames = device.ChannelBlock_AvailFrames(i);
-                if ((LastData || frames > channelblocksize) && frames > 0)
+                frames = device.ChannelBlock_AvailFrames(-1);
+            }
+            for (int i = 0; i < mChannels; i++)
+            {
+                if (!useCommonThreshold)
+                {
+                    frames = device.ChannelBlock_AvailFrames(i);
+                }
+                if ((LastData || frames > callbackThreshold) && frames > 0)
                 {
                     device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                     Debug.Assert(totalchannels == 1);
                     Debug.Assert(channels == 1);
-                    ushort[] data = device.ChannelBlock_ReadFramesUI16(i, channelblocksize, out int sizeRet);
-                    DrawChannelData(data, channel_offset);
+                    if (dataMode == DataModeEnumNet.Unsigned_16bit)
+                    {
+                        ushort[] data = device.ChannelBlock_ReadFramesUI16(i, callbackThreshold, out int sizeRet);
+                        DrawChannelData(data, channel_offset);
+                    }
+                    else // (dataMode == DataModeEnumNet.Signed_32bit)
+                    {
+                        int[] data = device.ChannelBlock_ReadFramesI32(i, callbackThreshold, out int sizeRet);
+                        DrawChannelData(data, channel_offset);
+                    }
                 }
             }
         }
@@ -256,9 +322,9 @@ namespace MEA_Recording
 
         private void OnChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples)
         {
-            if (useChannelData)
+            if (dataSelectionMethod == DataSelectionMethod.SetSelectedData)
             {
-                ChannelDataForChannelData();
+                ChannelDataForChannelData(numSamples);
             }
             else
             {
@@ -266,34 +332,74 @@ namespace MEA_Recording
             }
         }
 
-        private void ChannelDataForChannelData()
+        private void ChannelDataForChannelData(int numSamples)
         {
             device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int vyte_offset, out int channel_offset, out int channels);
 
-            // Get a data frame. This frame contains data from all channels and needs to be "unmixed" manually
-            ushort[] data = device.ChannelBlock_ReadFramesUI16(0, channelblocksize, out int sizeRet);
+            Debug.Assert(totalchannels == mChannels);
 
-            for (int i = 0; i < totalchannels; i++)
+            // Get a data frame. This frame contains data from all channels and needs to be "unmixed" manually
+            if (dataMode == DataModeEnumNet.Unsigned_16bit)
             {
-                ushort[] channelData = new ushort[sizeRet];
-                for (int j = 0; j < sizeRet; j++)
+                ushort[] data = device.ChannelBlock_ReadFramesUI16(0, callbackThreshold, out int sizeRet);
+
+                for (int i = 0; i < totalchannels; i++)
                 {
-                    channelData[j] = data[j * mChannelHandles + i];
+                    ushort[] channelData = new ushort[sizeRet];
+                    for (int j = 0; j < sizeRet; j++)
+                    {
+                        channelData[j] = data[j * totalchannels + i];
+                    }
+
+                    DrawChannelData(channelData, i);
+                }
+            }
+            else // (dataMode == DataModeEnumNet.Signed_32bit)
+            {
+                int[] data = device.ChannelBlock_ReadFramesI32(0, callbackThreshold, out int sizeRet);
+
+                for (int i = 0; i < totalchannels; i++)
+                {
+                    int[] channelData = new int[sizeRet];
+                    for (int j = 0; j < sizeRet; j++)
+                    {
+                        channelData[j] = data[j * totalchannels + i];
+                    }
+
+                    DrawChannelData(channelData, i);
                 }
 
-                DrawChannelData(channelData, i);
             }
         }
 
         private void ChannelDataWithoutChannelData(int cbHandle, int numSamples)
         {
-            device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
-            Debug.Assert(totalchannels == 1);
-            Debug.Assert(channels == 1);
+            if (cbHandle == -1)
+            {
+                Debug.Assert(useCommonThreshold);
+                for (int handle = 0; handle < mChannels; handle++)
+                {
+                    ChannelDataWithoutChannelData(handle, numSamples);
+                }
+            }
+            else
+            {
+                device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
+                Debug.Assert(totalchannels == 1);
+                Debug.Assert(channels == 1);
 
-            // Get a data frame. This contains the data for the channel with index cbHandle
-            ushort[] data = device.ChannelBlock_ReadFramesUI16(cbHandle, numSamples, out int sizeRet);
-            DrawChannelData(data, cbHandle);
+                // Get a data frame. This contains the data for the channel with index cbHandle
+                if (dataMode == DataModeEnumNet.Unsigned_16bit)
+                {
+                    ushort[] data = device.ChannelBlock_ReadFramesUI16(cbHandle, callbackThreshold, out int sizeRet);
+                    DrawChannelData(data, cbHandle);
+                }
+                else // (dataMode == DataModeEnumNet.Signed_32bit)
+                {
+                    int[] data = device.ChannelBlock_ReadFramesI32(cbHandle, callbackThreshold, out int sizeRet);
+                    DrawChannelData(data, cbHandle);
+                }
+            }
         }
 
         private void OnError(string msg, int info)
@@ -314,7 +420,23 @@ namespace MEA_Recording
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new OnChannelDataDelegate(DrawChannelData), data, offset);
+                BeginInvoke(new OnChannelDataDelegateUI16(DrawChannelData), data, offset);
+            }
+            else
+            {
+                int channel = cbChannel.SelectedIndex;
+                if (channel >= 0 && channel == offset)
+                {
+                    DrawChannel(data);
+                }
+            }
+        }
+
+        private void DrawChannelData(int[] data, int offset)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new OnChannelDataDelegateI32(DrawChannelData), data, offset);
             }
             else
             {
@@ -409,19 +531,33 @@ namespace MEA_Recording
 
         void DrawChannel(ushort[] data)
         {
-            mData = data;
+            mData = new double[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                mData[i] = data[i];
+            }
             panel1.Invalidate();
         }
 
-        private void Panel1Paint(object sender, PaintEventArgs e)
+        void DrawChannel(int[] data)
         {
-            int width = panel1.Width;
-            int height = panel1.Height;
-            int max = 0;
-            int min = 65536;
+            mData = new double[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                mData[i] = data[i];
+            }
+            panel1.Invalidate();
+        }
+
+            private void Panel1Paint(object sender, PaintEventArgs e)
+        {
+            double width = panel1.Width;
+            double height = panel1.Height;
+            double max = Double.MinValue;
+            double min = Double.MaxValue;
             if (mData != null && mData.Length > 1)
             {
-                foreach (ushort t in mData)
+                foreach (double t in mData)
                 {
                     if (t > max)
                     {
@@ -435,7 +571,7 @@ namespace MEA_Recording
                 Point[] points = new Point[mData.Length];
                 for (int i = 0; i < mData.Length; i++)
                 {
-                    points[i] = new Point(i * width / mData.Length, (mData[i]-min + 1) * height / (max-min + 2));
+                    points[i] = new Point((int)(i * width / mData.Length), (int)((mData[i]-min + 1) * height / (max-min + 2)));
                 }
                 Pen pen = new Pen(Color.Black, 1);
                 e.Graphics.DrawLines(pen, points);
@@ -461,12 +597,23 @@ namespace MEA_Recording
             usePollForData = checkBoxPollForData.Checked;
         }
 
-        private void OnCheckBoxChannelDataCheckedChanged(object sender, EventArgs e)
+        #endregion
+
+        private void checkBoxCommonThreshold_CheckedChanged(object sender, EventArgs e)
         {
-            useChannelData = checkBoxChannelData.Checked;
+            useCommonThreshold = checkBoxCommonThreshold.Checked;
         }
 
-        #endregion
+        private void comboBoxDataSelectionMethod_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            dataSelectionMethod = (DataSelectionMethod)comboBoxDataSelectionMethod.SelectedItem;
+            checkBoxCommonThreshold.Enabled = dataSelectionMethod == DataSelectionMethod.SetSelectedChannels;
+        }
+
+        private void comboBoxDataMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            dataMode = (DataModeEnumNet) comboBoxDataMode.SelectedItem;
+        }
     }
 
 }

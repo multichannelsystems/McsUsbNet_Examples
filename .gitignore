@@ -7,3 +7,4 @@ Debug/
 *.user
 .vs
 *.asv
+/Examples/Python/__pycache__/

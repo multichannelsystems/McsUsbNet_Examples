@@ -38,6 +38,8 @@ namespace Feedback
         {
             InitializeComponent();
 
+            numericUpDown1.Value = 4;
+
             timer.Elapsed += Timer_Elapsed;
 
             mea.ErrorEvent += Mea_ErrorEvent;
@@ -221,7 +223,9 @@ namespace Feedback
                 ClearInfo();
 
                 //mea.StartDacq(-1, 32, 64, 128, 0);
-                mea.StartDacq(-1, 128, 256, 16, 0);
+                int paketsPerUrb = int.Parse(textBox1.Text);
+                int numUsbBuffers = 4096 / paketsPerUrb;
+                mea.StartDacq(-1, numUsbBuffers, 2 * numUsbBuffers, paketsPerUrb, 0);
 
                 btStop.Enabled = true;
                 btStart.Enabled = false;
@@ -241,6 +245,11 @@ namespace Feedback
             btStart.Enabled = true;
             btStop.Enabled = false;
 
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            textBox1.Text = (8*Math.Pow(2, (int)numericUpDown1.Value)).ToString();
         }
     }
 }

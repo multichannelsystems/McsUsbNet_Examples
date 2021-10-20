@@ -16,14 +16,14 @@ function run_mea(device)
         cleanupObj = onCleanup(@()cleanup_mea(device));
         
         % Make sure that the data acquisition is stopped
-        device.SendStop();
+        device.StopDacq();
         
         % Get/set the number of channels for the device
         [status,hwchannels] = device.HWInfo().GetNumberOfHWADCChannels();
         status = device.SetNumberOfChannels(hwchannels);
         
         % Retrieve the channel designations from the device
-        [status, analogchannels, digitalchannels, checksumchannels, timestampchannels, channelsinblock] = device.GetChannelLayout(0);
+        [analogchannels, digitalchannels, checksumchannels, timestampchannels, channelsinblock] = device.GetChannelLayout(0);
 
         % Set the sampling rate
         device.SetSamplerate(50000, 1, 0); % 50 kHz
@@ -42,7 +42,7 @@ function run_mea(device)
 
         x = 0;
         while 1
-            for i = [0 channelsinblock - 1]
+            for i = 0:(channelsinblock-1)
                 number = device.ChannelBlock_AvailFrames(i);
                 % wait until at least 5000 samples are available
                 if number >= 5000
@@ -60,8 +60,10 @@ function run_mea(device)
             end
             pause(0.01);
             x = x + 1;
-            if (x == 5000)
-                break; % stop after 5000 data packets (~ 500 seconds)
+            if (x == 500)
+                break; % stop after 500 data packets (~ 5 seconds)
+            end
+            
             % read out any error messages from the device
             [status,message,info] = device.GetErrorMessage();
             while status == 0

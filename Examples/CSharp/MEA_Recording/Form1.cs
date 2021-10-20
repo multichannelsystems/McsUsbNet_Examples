@@ -166,10 +166,13 @@ namespace MEA_Recording
             
             int miliGain = device.GetGain();
 
-            var voltageRanges = device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
-            for (int i = 0; i < voltageRanges.Count; i++)
+            if (miliGain > 0)
             {
-                tbDeviceInfo.Text += @"(" + i.ToString("D") + @") " + voltageRanges[i].VoltageRangeDisplayStringMilliVolt + Environment.NewLine;
+                var voltageRanges = device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
+                for (int i = 0; i < voltageRanges.Count; i++)
+                {
+                    tbDeviceInfo.Text += @"(" + i.ToString("D") + @") " + voltageRanges[i].VoltageRangeDisplayStringMilliVolt + Environment.NewLine;
+                }
             }
 
             // Set the range according to the index (only valid for MC_Card)

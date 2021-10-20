@@ -1,6 +1,3 @@
 [submodule "McsUsbNet"]
 	path = McsUsbNet
 	url = https://github.com/multichannelsystems/McsUsbNet.git
-[submodule "McsUsbNet"]
-	path = McsUsbNet
-	url = https://github.com/multichannelsystems/McsUsbNet.git

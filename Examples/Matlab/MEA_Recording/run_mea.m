@@ -62,6 +62,11 @@ function run_mea(device)
             x = x + 1;
             if (x == 5000)
                 break; % stop after 5000 data packets (~ 500 seconds)
+            % read out any error messages from the device
+            [status,message,info] = device.GetErrorMessage();
+            while status == 0
+                disp(message);
+                [status,message,info] = device.GetErrorMessage();
             end
         end
 

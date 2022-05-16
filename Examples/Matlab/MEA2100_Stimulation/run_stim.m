@@ -14,6 +14,8 @@ function run_stim(device)
        fprintf('Serial Number: %s\n', SerialNumber);
     end
 
+    electrode = 0;
+
     % Connect to the first STG object
     status = device.Connect(deviceList.GetUsbListEntry(0));
     

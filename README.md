@@ -1,4 +1,4 @@
-# README for McsUsbNet.dll
+# README for McsUsbNet_Examples
 
 This repository contains the `McsUsbNet.dll` for accessing MCS devices directly, as well as documentation and examples.
 

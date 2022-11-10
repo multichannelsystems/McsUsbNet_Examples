@@ -56,6 +56,7 @@ namespace MEA2100_Stimulation
 
             // array of amplitudes and duration
             int[] amplitude = new int[2] {10000, -10000}; // µV
+            int[] syncout = new int[2] { 0x1000, 0x2000 };
             ulong[] duration = new ulong[2] {100000, 100000}; // µs
 
             // use voltage stimulation
@@ -63,6 +64,8 @@ namespace MEA2100_Stimulation
 
             // send stimulus data to device
             cStgDevice.PrepareAndSendData(0, amplitude, duration, STG_DestinationEnumNet.channeldata_voltage);
+
+            cStgDevice.PrepareAndSendData(0, syncout, duration, STG_DestinationEnumNet.syncoutdata);
 
             // connect all stimulation channels to the first trigger
             cStgDevice.SetupTrigger(0, new uint[] { 255 }, new uint[] { 255 }, new uint[] { 1 });

@@ -72,6 +72,8 @@ namespace MEA2100_Recording_and_Stimulation
             }
         }
 
+        private int HeadStage = 3;
+
         private int channelsInBlock = 0;
         private int threshold = 0;
         private void Dacq_ChannelDataEvent(CMcsUsbDacqNet dacq, int CbHandle, int numFrames)
@@ -81,8 +83,12 @@ namespace MEA2100_Recording_and_Stimulation
             {
                 data.Add(dacq.ChannelBlock_ReadFramesI32(i, threshold, out int frames_ret));
             }
-
-            BeginInvoke(new HandleDataDelegate(HandleData), data[60], data[70]);
+            // 0 - 59: Elektrode Channels
+            // 60 - 67 IFB Analog IFB channels
+            // 68 Digital In/Out
+            // 69 - 74 Sideband channels
+            // 75 - 76 Checksum channels
+            BeginInvoke(new HandleDataDelegate(HandleData), data[0], data[69 + HeadStage]);
         }
 
         delegate void HandleDataDelegate(int[] data1, int[] data2);
@@ -112,20 +118,26 @@ namespace MEA2100_Recording_and_Stimulation
 
                 dacq.StopDacq(0); // if software hat not stopped sampling correctly before
 
+                CSCUFunctionNet scu = new CSCUFunctionNet(dacq);
+                scu.SetDacqLegacyMode(false);
+
                 int samplerate = 50000;
                 dacq.SetSamplerate(samplerate, 0, 0);
 
                 dacq.SetDataMode(DataModeEnumNet.Signed_32bit, 0);
+                // for MEA2100-Mini it is assumed that only one HS is connected
                 dacq.SetNumberOfAnalogChannels(60, 0, 0, 8, 0);
 
                 dacq.EnableDigitalIn(DigitalDatastreamEnableEnumNet.DigitalIn | DigitalDatastreamEnableEnumNet.DigitalOut |
                                      DigitalDatastreamEnableEnumNet.Hs1SidebandLow | DigitalDatastreamEnableEnumNet.Hs1SidebandHigh, 0);
                 dacq.EnableChecksum(true, 0);
 
+                // numbers are in 16bit
                 dacq.GetChannelLayout(out int analogChannels, out int digitalChannels, out int checksumChannels, out int timestampChannels, out channelsInBlock, 0);
 
                 int queuesize = samplerate;
                 threshold = samplerate / 10;
+                // channelsInBlock / 2 gives the number of channels in 32bit
                 dacq.SetSelectedChannels(channelsInBlock / 2, queuesize, threshold, SampleSizeNet.SampleSize32Signed, channelsInBlock);
 
                 dacq.ChannelBlock_SetCommonThreshold(threshold);
@@ -149,16 +161,21 @@ namespace MEA2100_Recording_and_Stimulation
 
         private void btStimulationStart_Click(object sender, EventArgs e)
         {
-            int[] amplitude = new int[]{10000, -10000, 0, 20000, -20000, 0};
-            int [] sideband = new int[] { 1, 3, 0, 1, 3, 0 };
-            ulong[] duration = new ulong[] {1000, 1000, 1000, 1000, 1000, 1000};
+            int[] amplitude1 = new int[] { 10000, -10000, 0, 20000, -20000, 0 };
+            int[] amplitude2 = new int[] { -10000, 10000, 0, -20000, 20000, 0 };
+            int[] sideband1 = new int[] { 1, 3, 0, 1, 3, 0 };
+            int[] sideband2 = new int[] { 4, 12, 0, 4, 12, 0 };
+            ulong[] duration = new ulong[] {1000, 1000, 100000, 1000, 1000, 100000}; // could be different in length an numbers for each amplitude and sideband, it only needs to be equal in length for the individual amplitude and sideband 
             
             stg.SetVoltageMode(0);
 
-            stg.PrepareAndSendData(2, amplitude, duration, STG_DestinationEnumNet.channeldata_voltage);
-            stg.PrepareAndSendData(2, sideband, duration, STG_DestinationEnumNet.syncoutdata);
+            stg.PrepareAndSendData(2 * (uint)HeadStage + 0, amplitude1, duration, STG_DestinationEnumNet.channeldata_voltage);
+            stg.PrepareAndSendData(2 * (uint)HeadStage + 0, sideband1, duration, STG_DestinationEnumNet.syncoutdata);
 
-            stg.SetupTrigger(0, new uint[]{255}, new uint[]{255}, new uint[]{1});
+            stg.PrepareAndSendData(2 * (uint)HeadStage + 1, amplitude2, duration, STG_DestinationEnumNet.channeldata_voltage);
+            stg.PrepareAndSendData(2 * (uint)HeadStage + 1, sideband2, duration, STG_DestinationEnumNet.syncoutdata);
+
+            stg.SetupTrigger(0, new uint[]{255}, new uint[]{255}, new uint[]{10});
 
             stg.SendStart(1);
         }

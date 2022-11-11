@@ -28,8 +28,23 @@ namespace MEA2100_Recording_and_Stimulation
             dacq.ErrorEvent += Dacq_ErrorEvent;
             dacq.ChannelDataEvent += Dacq_ChannelDataEvent;
 
+            stg.Stg200xPollStatusEvent += Stg_Stg200xPollStatusEvent;
+
             RefreshDeviceList();
         }
+
+        private void Stg_Stg200xPollStatusEvent(uint status, StgStatusNet stgStatusNet, int[] index_list)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new OnStgPollStatus(Stg_Stg200xPollStatusEvent), status, stgStatusNet, index_list);
+            }
+            else
+            {
+                listBox1.Items.Add("STG: " + status.ToString("X8"));
+            }
+        }
+
         private void RefreshDeviceList()
         {
             cbDeviceList.Items.Clear();
@@ -67,7 +82,7 @@ namespace MEA2100_Recording_and_Stimulation
                 data.Add(dacq.ChannelBlock_ReadFramesI32(i, threshold, out int frames_ret));
             }
 
-            BeginInvoke(new HandleDataDelegate(HandleData), data[60], data[68]);
+            BeginInvoke(new HandleDataDelegate(HandleData), data[60], data[70]);
         }
 
         delegate void HandleDataDelegate(int[] data1, int[] data2);
@@ -93,6 +108,7 @@ namespace MEA2100_Recording_and_Stimulation
             uint status = dacq.Connect(deviceEntry);
             if (status == 0)
             {
+                stg.Connect(deviceEntry);
 
                 dacq.StopDacq(0); // if software hat not stopped sampling correctly before
 
@@ -128,16 +144,28 @@ namespace MEA2100_Recording_and_Stimulation
         {
             dacq.StopDacq(0);
             dacq.Disconnect();
+            stg.Disconnect();
         }
 
         private void btStimulationStart_Click(object sender, EventArgs e)
         {
+            int[] amplitude = new int[]{10000, -10000, 0, 20000, -20000, 0};
+            int [] sideband = new int[] { 1, 3, 0, 1, 3, 0 };
+            ulong[] duration = new ulong[] {1000, 1000, 1000, 1000, 1000, 1000};
+            
+            stg.SetVoltageMode(0);
 
+            stg.PrepareAndSendData(2, amplitude, duration, STG_DestinationEnumNet.channeldata_voltage);
+            stg.PrepareAndSendData(2, sideband, duration, STG_DestinationEnumNet.syncoutdata);
+
+            stg.SetupTrigger(0, new uint[]{255}, new uint[]{255}, new uint[]{1});
+
+            stg.SendStart(1);
         }
 
         private void btStimulatinStop_Click(object sender, EventArgs e)
         {
-
+            stg.SendStop(1);
         }
     }
 }

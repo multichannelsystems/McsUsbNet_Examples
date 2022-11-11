@@ -37,7 +37,7 @@ namespace MEA2100_Recording_and_Stimulation
         {
             if (InvokeRequired)
             {
-                Invoke(new OnStgPollStatus(Stg_Stg200xPollStatusEvent), status, stgStatusNet, index_list);
+                BeginInvoke(new OnStgPollStatus(Stg_Stg200xPollStatusEvent), status, stgStatusNet, index_list);
             }
             else
             {
@@ -64,7 +64,7 @@ namespace MEA2100_Recording_and_Stimulation
         {
             if (InvokeRequired)
             {
-                Invoke(new OnError(Dacq_ErrorEvent), msg, action);
+                BeginInvoke(new OnError(Dacq_ErrorEvent), msg, action);
             }
             else
             {
@@ -72,6 +72,7 @@ namespace MEA2100_Recording_and_Stimulation
             }
         }
 
+        private int Electrode = 0;
         private int HeadStage = 3;
 
         private int channelsInBlock = 0;
@@ -88,7 +89,7 @@ namespace MEA2100_Recording_and_Stimulation
             // 68 Digital In/Out
             // 69 - 74 Sideband channels
             // 75 - 76 Checksum channels
-            BeginInvoke(new HandleDataDelegate(HandleData), data[0], data[69 + HeadStage]);
+            BeginInvoke(new HandleDataDelegate(HandleData), data[Electrode], data[69 + HeadStage]);
         }
 
         delegate void HandleDataDelegate(int[] data1, int[] data2);
@@ -165,8 +166,16 @@ namespace MEA2100_Recording_and_Stimulation
             int[] amplitude2 = new int[] { -10000, 10000, 0, -20000, 20000, 0 };
             int[] sideband1 = new int[] { 1, 3, 0, 1, 3, 0 };
             int[] sideband2 = new int[] { 4, 12, 0, 4, 12, 0 };
-            ulong[] duration = new ulong[] {1000, 1000, 100000, 1000, 1000, 100000}; // could be different in length an numbers for each amplitude and sideband, it only needs to be equal in length for the individual amplitude and sideband 
-            
+            ulong[] duration = new ulong[] {1000, 1000, 10000, 1000, 1000, 100000}; // could be different in length an numbers for each amplitude and sideband, it only needs to be equal in length for the individual amplitude and sideband 
+
+            for (int i = 0; i < 60; i++)
+            {
+                stg.SetElectrodeMode((uint)HeadStage, (uint)i, i == Electrode ? ElectrodeModeEnumNet.emManual : ElectrodeModeEnumNet.emAutomatic);
+                stg.SetElectrodeEnable((uint)HeadStage, (uint)i, 0, i == Electrode ? true : false);
+                stg.SetElectrodeDacMux((uint)HeadStage, (uint)i, 0, i == Electrode ? ElectrodeDacMuxEnumNet.Stg1 : ElectrodeDacMuxEnumNet.Ground);
+                stg.SetEnableAmplifierProtectionSwitch((uint)HeadStage, (uint)i, false);
+            }
+
             stg.SetVoltageMode(0);
 
             stg.PrepareAndSendData(2 * (uint)HeadStage + 0, amplitude1, duration, STG_DestinationEnumNet.channeldata_voltage);

@@ -112,6 +112,7 @@ namespace MEA2100_Recording_and_Stimulation
             // 
             // chart1
             // 
+            this.chart1.AntiAliasing = System.Windows.Forms.DataVisualization.Charting.AntiAliasingStyles.None;
             chartArea1.Name = "ChartArea1";
             this.chart1.ChartAreas.Add(chartArea1);
             this.chart1.Location = new System.Drawing.Point(12, 69);

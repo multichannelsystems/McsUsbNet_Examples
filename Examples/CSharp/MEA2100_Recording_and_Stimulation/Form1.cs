@@ -85,19 +85,28 @@ namespace MEA2100_Recording_and_Stimulation
             {
                 data.Add(dacq.ChannelBlock_ReadFramesI32(i, threshold, out int frames_ret));
             }
-            // 0 - 59: Elektrode Channels
-            // 60 - 67 IFB Analog IFB channels
-            // 68 Digital In/Out
-            // 69 - 74 Sideband channels
-            // 75 - 76 Checksum channels
-            BeginInvoke(new HandleDataDelegate(HandleData), data[Electrode1], data[69 + HeadStage]);
+
+            if (!inHandleData) // skip if last invoke has not finished yet (weak graphic performance)
+            {
+                // 0 - 59: Elektrode Channels
+                // 60 - 67 IFB Analog IFB channels
+                // 68 Digital In/Out
+                // 69 - 74 Sideband channels
+                // 75 - 76 Checksum channels
+                BeginInvoke(new HandleDataDelegate(HandleData), data[Electrode1], data[69 + HeadStage]);
+            }
         }
 
         delegate void HandleDataDelegate(int[] data1, int[] data2);
 
+        // Used for weak graphic performance
+        private bool inHandleData = false;
+
         private void HandleData(int[] data1, int[] data2)
         {
-            bool scaled = true;
+            inHandleData = true;
+
+            bool scaled = false;
             if (scaled)
             {
                 double[] scaledData = ScaleData(data1, resolutionHS);
@@ -108,23 +117,77 @@ namespace MEA2100_Recording_and_Stimulation
                 FillSeries(0, data1);
             }
             FillSeries(1, data2);
+
+            inHandleData = false;
         }
 
         private void FillSeries(int serie, int[] data)
         {
             chart1.Series[serie].Points.Clear();
-            for (int i = 0; i < data.Length; i++)
+            int length = data.Length;
+            int joined = length / chart1.Width;
+            for (int i = 0; i < length; i++)
             {
+#if true // workaround for performance 
+                double x = i;
+                double max = Double.MinValue;
+                double min = Double.MaxValue;
+                for (int j = 0; j < joined && i < length; j++, i++)
+                {
+                    if (data[i] > max)
+                    {
+                        max = data[i];
+                    }
+
+                    if (data[i] < min)
+                    {
+                        min = data[i];
+                    }
+                }
+
+                if (max != Double.MinValue)
+                {
+                    chart1.Series[serie].Points.AddXY(x, max);
+                    chart1.Series[serie].Points.AddXY(x, min);
+                }
+#else
                 chart1.Series[serie].Points.AddXY(i, data[i]);
+#endif
             }
         }
 
         private void FillSeries(int serie, double[] data)
         {
             chart1.Series[serie].Points.Clear();
-            for (int i = 0; i < data.Length; i++)
+            int length = data.Length;
+            int joined = length / chart1.Width;
+            for (int i = 0; i < length; i++)
             {
+#if true // workaround for performance 
+                double x = i;
+                double max = Double.MinValue;
+                double min = Double.MaxValue;
+                for (int j = 0; j < joined && i < length; j++, i++)
+                {
+                    if (data[i] > max)
+                    {
+                        max = data[i];
+                    }
+
+                    if (data[i] < min)
+                    {
+                        min = data[i];
+                    }
+                }
+
+                if (max != Double.MinValue)
+                {
+                    chart1.Series[serie].Points.AddXY(x, max);
+                    chart1.Series[serie].Points.AddXY(x, min);
+                }
+#else
                 chart1.Series[serie].Points.AddXY(i, data[i]);
+#endif
             }
         }
 

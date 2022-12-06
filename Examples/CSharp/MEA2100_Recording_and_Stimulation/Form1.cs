@@ -97,7 +97,16 @@ namespace MEA2100_Recording_and_Stimulation
 
         private void HandleData(int[] data1, int[] data2)
         {
-            FillSeried(0, data1);
+            bool scaled = true;
+            if (scaled)
+            {
+                double[] scaledData = ScaleData(data1, resolutionHS);
+                FillSeried(0, scaledData);
+            }
+            else
+            {
+                FillSeried(0, data1);
+            }
             FillSeried(1, data2);
         }
 
@@ -108,6 +117,29 @@ namespace MEA2100_Recording_and_Stimulation
             {
                 chart1.Series[serie].Points.AddXY(i, data[i]);
             }
+        }
+
+        private void FillSeried(int serie, double[] data)
+        {
+            chart1.Series[serie].Points.Clear();
+            for (int i = 0; i < data.Length; i++)
+            {
+                chart1.Series[serie].Points.AddXY(i, data[i]);
+            }
+        }
+
+        private double resolutionHS = 1;
+        private double resolutionIFBADC = 1;
+
+        double[] ScaleData(int[] data, double resolution)
+        {
+            double[] scaled = new double[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                scaled[i] = resolution * (double) data[i];
+            }
+
+            return scaled;
         }
 
         private void btRecordingStart_Click(object sender, EventArgs e)
@@ -127,6 +159,14 @@ namespace MEA2100_Recording_and_Stimulation
                 dacq.SetSamplerate(samplerate, 0, 0);
 
                 dacq.SetDataMode(DataModeEnumNet.Signed_32bit, 0);
+
+                dacq.GetResolutionPerDigit(0, DacqGroupChannelEnumNet.HeadstageElectrodeGroup, out int resHS, out int resHSUnit);
+                resolutionHS = resHS * Math.Pow(10, -resHSUnit);
+
+                dacq.GetResolutionPerDigit(0, DacqGroupChannelEnumNet.InterfaceADCGroup, out int resIFBADC, out int resIFBADCUnit);
+                resolutionIFBADC = resIFBADC * Math.Pow(10, -resIFBADCUnit);
+
+
                 // for MEA2100-Mini it is assumed that only one HS is connected
                 dacq.SetNumberOfAnalogChannels(60, 0, 0, 8, 0);
 

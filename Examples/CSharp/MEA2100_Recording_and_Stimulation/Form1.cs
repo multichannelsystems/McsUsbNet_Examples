@@ -101,16 +101,16 @@ namespace MEA2100_Recording_and_Stimulation
             if (scaled)
             {
                 double[] scaledData = ScaleData(data1, resolutionHS);
-                FillSeried(0, scaledData);
+                FillSeries(0, scaledData);
             }
             else
             {
-                FillSeried(0, data1);
+                FillSeries(0, data1);
             }
-            FillSeried(1, data2);
+            FillSeries(1, data2);
         }
 
-        private void FillSeried(int serie, int[] data)
+        private void FillSeries(int serie, int[] data)
         {
             chart1.Series[serie].Points.Clear();
             for (int i = 0; i < data.Length; i++)
@@ -119,7 +119,7 @@ namespace MEA2100_Recording_and_Stimulation
             }
         }
 
-        private void FillSeried(int serie, double[] data)
+        private void FillSeries(int serie, double[] data)
         {
             chart1.Series[serie].Points.Clear();
             for (int i = 0; i < data.Length; i++)

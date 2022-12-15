@@ -68,7 +68,7 @@ namespace MEA2100_Recording_and_Stimulation
             List<int[]> data = new List<int[]>();
             for (int i = 0; i < channelsInBlock / 2; i++)
             {
-                data.Add(dacq.ChannelBlock_ReadFramesI32(i, threshold, out int frames_ret));
+                data.Add(dacq.ChannelBlock.ReadFramesI32(i, 0, threshold, out int frames_ret));
             }
 
             if (!inHandleData) // skip if last invoke has not finished yet (weak graphic performance)
@@ -226,11 +226,11 @@ namespace MEA2100_Recording_and_Stimulation
                 int queuesize = samplerate;
                 threshold = samplerate / 10;
                 // channelsInBlock / 2 gives the number of channels in 32bit
-                dacq.SetSelectedChannels(channelsInBlock / 2, queuesize, threshold, SampleSizeNet.SampleSize32Signed, channelsInBlock);
+                dacq.ChannelBlock.SetSelectedChannels(channelsInBlock / 2, queuesize, threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, channelsInBlock);
 
-                dacq.ChannelBlock_SetCommonThreshold(threshold);
+                dacq.ChannelBlock.SetCommonThreshold(threshold);
 
-                dacq.ChannelBlock_SetCheckChecksum((uint) checksumChannels, (uint) timestampChannels);
+                dacq.ChannelBlock.SetCheckChecksum((uint) checksumChannels, (uint) timestampChannels);
 
                 dacq.StartDacq();
             }

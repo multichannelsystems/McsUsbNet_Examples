@@ -98,7 +98,7 @@ namespace Feedback
         {
             CMeaDigitalDataFunctionNet dig = new CMeaDigitalDataFunctionNet(dacq);
 
-            int[] data = mea.ChannelBlock_ReadFramesI32(0, Threshold, out int frames_read);
+            int[] data = mea.ChannelBlock.ReadFramesI32(0, 0, Threshold, out int frames_read);
             for (int i = Channels + AnalogChannels; i < data.Length; i += TotalChannels)
             {
                 int z = data[i];
@@ -208,9 +208,9 @@ namespace Feedback
                 mea.GetChannelLayout(out int analogChannels, out int digitalChannels, out int checksumChannels, out int timestampChannels, out int channelsInBlock, 0);
 
                 TotalChannels = channelsInBlock / 2;
-                mea.SetSelectedData(TotalChannels, Samplerate * 10, Threshold, SampleSizeNet.SampleSize32Signed, ChannelsInBlock);
+                mea.ChannelBlock.SetSelectedData(TotalChannels, Samplerate * 10, Threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, ChannelsInBlock);
 
-                mea.ChannelBlock_SetCheckChecksum((uint)checksumChannels, (uint)timestampChannels);
+                mea.ChannelBlock.SetCheckChecksum((uint)checksumChannels, (uint)timestampChannels);
 
                 CMeaDigitalDataFunctionNet dig = new CMeaDigitalDataFunctionNet(mea);
                 dig.SetDigitalData(0, false);

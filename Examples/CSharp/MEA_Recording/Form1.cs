@@ -34,8 +34,8 @@ namespace MEA_Recording
         // This flag should be active for W2100 devices
         private bool useWireless;
 
-        private DataModeEnumNet dataMode = DataModeEnumNet.Unsigned_16bit;
-        //private DataModeEnumNet dataMode = DataModeEnumNet.Signed_32bit;
+        //private DataModeEnumNet dataMode = DataModeEnumNet.Unsigned_16bit;
+        private DataModeEnumNet dataMode = DataModeEnumNet.Signed_32bit;
 
         // The overall number of channels (including data, digital, checksum, timestamp) in one sample. 
         // Checksum and timestamp are not available for MC_Card
@@ -53,11 +53,15 @@ namespace MEA_Recording
         private double[] mData;
 
         Dictionary<DataModeEnumNet, SampleSizeNet> DataModeToSampleSizeDict = new Dictionary<DataModeEnumNet, SampleSizeNet>();
+        Dictionary<DataModeEnumNet, SampleDstSizeNet> DataModeToSampleDstSizeDict = new Dictionary<DataModeEnumNet, SampleDstSizeNet>();
 
         public Form1()
         {
             DataModeToSampleSizeDict.Add(DataModeEnumNet.Unsigned_16bit, SampleSizeNet.SampleSize16Unsigned);
             DataModeToSampleSizeDict.Add(DataModeEnumNet.Signed_32bit, SampleSizeNet.SampleSize32Signed);
+
+            DataModeToSampleDstSizeDict.Add(DataModeEnumNet.Unsigned_16bit, SampleDstSizeNet.SampleDstSize16);
+            DataModeToSampleDstSizeDict.Add(DataModeEnumNet.Signed_32bit, SampleDstSizeNet.SampleDstSize32);
 
             InitializeComponent();
 
@@ -161,7 +165,7 @@ namespace MEA_Recording
             // configure MeaDevice: MC_Card or Usb
             device.SetNumberOfChannels(hwchannels);
 
-            const int Samplingrate = 20000; // MC_Card does not support all settings, please see MC_Rack for valid settings
+            const int Samplingrate = 50000; // MC_Card does not support all settings, please see MC_Rack for valid settings
             device.SetSamplerate(Samplingrate, 1, 0);
             
             int miliGain = device.GetGain();
@@ -209,19 +213,19 @@ namespace MEA_Recording
             // queue size and threshold should be selected carefully
             if (dataSelectionMethod == DataSelectionMethod.SetSelectedData)
             {
-                device.SetSelectedData(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], block);
+                device.ChannelBlock.SetSelectedData(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], DataModeToSampleDstSizeDict[dataMode], block);
             }
             else // (dataSelectionMethod == DataSelectionMethod.SetSelectedChannels)
             {
-                device.SetSelectedChannels(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], block);
+                device.ChannelBlock.SetSelectedChannels(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], DataModeToSampleDstSizeDict[dataMode], block);
 
                 if (useCommonThreshold)
                 {
-                    device.ChannelBlock_SetCommonThreshold(callbackThreshold);
+                    device.ChannelBlock.SetCommonThreshold(callbackThreshold);
                 }
             }
 
-            device.ChannelBlock_SetCheckChecksum((uint)che, (uint)tim);
+            device.ChannelBlock.SetCheckChecksum((uint)che, (uint)tim);
         }
 
         /* Here follow the callback function for receiving data and receiving error messages
@@ -252,13 +256,13 @@ namespace MEA_Recording
 
         private void TimerTickForChannelData()
         {
-            uint frames = device.ChannelBlock_AvailFrames(0);
+            uint frames = device.ChannelBlock.AvailFrames(0, 0);
             if ((LastData || frames > callbackThreshold) && frames > 0)
             {
-                device.ChannelBlock_GetChannel(0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
+                device.ChannelBlock.GetChannel(0, 0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
                 if (dataMode == DataModeEnumNet.Unsigned_16bit)
                 {
-                    ushort[] data = device.ChannelBlock_ReadFramesUI16(0, callbackThreshold, out int sizeRet);
+                    ushort[] data = device.ChannelBlock.ReadFramesUI16(0, 0, callbackThreshold, out int sizeRet);
                     for (int i = 0; i < totalChannels; i++)
                     {
                         ushort[] channelData = new ushort[sizeRet];
@@ -272,7 +276,7 @@ namespace MEA_Recording
                 }
                 else // (dataMode == DataModeEnumNet.Signed_32bit)
                 {
-                    int[] data = device.ChannelBlock_ReadFramesI32(0, callbackThreshold, out int sizeRet);
+                    int[] data = device.ChannelBlock.ReadFramesI32(0, 0, callbackThreshold, out int sizeRet);
                     for (int i = 0; i < totalChannels; i++)
                     {
                         int[] channelData = new int[sizeRet];
@@ -292,27 +296,27 @@ namespace MEA_Recording
             uint frames = 0;
             if (useCommonThreshold)
             {
-                frames = device.ChannelBlock_AvailFrames(-1);
+                frames = device.ChannelBlock.AvailFrames(-1, -1);
             }
             for (int i = 0; i < mChannels; i++)
             {
                 if (!useCommonThreshold)
                 {
-                    frames = device.ChannelBlock_AvailFrames(i);
+                    frames = device.ChannelBlock.AvailFrames(i, 0);
                 }
                 if ((LastData || frames > callbackThreshold) && frames > 0)
                 {
-                    device.ChannelBlock_GetChannel(i, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
+                    device.ChannelBlock.GetChannel(i, 0, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                     Debug.Assert(totalchannels == 1);
                     Debug.Assert(channels == 1);
                     if (dataMode == DataModeEnumNet.Unsigned_16bit)
                     {
-                        ushort[] data = device.ChannelBlock_ReadFramesUI16(i, callbackThreshold, out int sizeRet);
+                        ushort[] data = device.ChannelBlock.ReadFramesUI16(i, 0, callbackThreshold, out int sizeRet);
                         DrawChannelData(data, channel_offset);
                     }
                     else // (dataMode == DataModeEnumNet.Signed_32bit)
                     {
-                        int[] data = device.ChannelBlock_ReadFramesI32(i, callbackThreshold, out int sizeRet);
+                        int[] data = device.ChannelBlock.ReadFramesI32(i, 0, callbackThreshold, out int sizeRet);
                         DrawChannelData(data, channel_offset);
                     }
                 }
@@ -337,14 +341,14 @@ namespace MEA_Recording
 
         private void ChannelDataForChannelData(int numSamples)
         {
-            device.ChannelBlock_GetChannel(0, 0, out int totalchannels, out int vyte_offset, out int channel_offset, out int channels);
+            device.ChannelBlock.GetChannel(0, 0, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
 
             Debug.Assert(totalchannels == mChannels);
 
             // Get a data frame. This frame contains data from all channels and needs to be "unmixed" manually
             if (dataMode == DataModeEnumNet.Unsigned_16bit)
             {
-                ushort[] data = device.ChannelBlock_ReadFramesUI16(0, callbackThreshold, out int sizeRet);
+                ushort[] data = device.ChannelBlock.ReadFramesUI16(0, 0, callbackThreshold, out int sizeRet);
 
                 for (int i = 0; i < totalchannels; i++)
                 {
@@ -359,7 +363,7 @@ namespace MEA_Recording
             }
             else // (dataMode == DataModeEnumNet.Signed_32bit)
             {
-                int[] data = device.ChannelBlock_ReadFramesI32(0, callbackThreshold, out int sizeRet);
+                int[] data = device.ChannelBlock.ReadFramesI32(0, 0, callbackThreshold, out int sizeRet);
 
                 for (int i = 0; i < totalchannels; i++)
                 {
@@ -387,19 +391,19 @@ namespace MEA_Recording
             }
             else
             {
-                device.ChannelBlock_GetChannel(cbHandle, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
+                device.ChannelBlock.GetChannel(cbHandle, 0, 0, out int totalchannels, out int byte_offset, out int channel_offset, out int channels);
                 Debug.Assert(totalchannels == 1);
                 Debug.Assert(channels == 1);
 
                 // Get a data frame. This contains the data for the channel with index cbHandle
                 if (dataMode == DataModeEnumNet.Unsigned_16bit)
                 {
-                    ushort[] data = device.ChannelBlock_ReadFramesUI16(cbHandle, callbackThreshold, out int sizeRet);
+                    ushort[] data = device.ChannelBlock.ReadFramesUI16(cbHandle, 0, callbackThreshold, out int sizeRet);
                     DrawChannelData(data, cbHandle);
                 }
                 else // (dataMode == DataModeEnumNet.Signed_32bit)
                 {
-                    int[] data = device.ChannelBlock_ReadFramesI32(cbHandle, callbackThreshold, out int sizeRet);
+                    int[] data = device.ChannelBlock.ReadFramesI32(cbHandle, 0, callbackThreshold, out int sizeRet);
                     DrawChannelData(data, cbHandle);
                 }
             }

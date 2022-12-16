@@ -17,14 +17,15 @@ from Mcs.Usb import CMeaDeviceNet
 from Mcs.Usb import McsBusTypeEnumNet
 from Mcs.Usb import DataModeEnumNet
 from Mcs.Usb import SampleSizeNet
+from Mcs.Usb import SampleDstSizeNet
 
 def OnChannelData(x, cbHandle, numSamples):
     if dataMode == DataModeEnumNet.Unsigned_16bit:
-        data, frames_ret = device.ChannelBlock_ReadFramesUI16(0, callbackThreshold, Int32(0));
+        data, frames_ret = device.ChannelBlock.ReadFramesUI16(0, 0, callbackThreshold, Int32(0));
         np_data = asNumpyArray(data, ctypes.c_uint16)
         print(".Net numSamples: %d frames_ret: %d size: %d Data: %04x %04x Checksum: %04x %04x %04x %04x" % (numSamples, frames_ret, len(np_data), np_data[0], np_data[1], np_data[2], np_data[3], np_data[4], np_data[5]))
     else: # dataMode == DataModeEnumNet.Signed_32bit
-        data, frames_ret = device.ChannelBlock_ReadFramesI32(0, callbackThreshold, Int32(0));
+        data, frames_ret = device.ChannelBlock.ReadFramesI32(0, 0, callbackThreshold, Int32(0));
         np_data = asNumpyArray(data, ctypes.c_int32)
         print(".Net numSamples: %d frames_ret: %d size: %d Data: %08x %08x Checksum: %08x %08x" % (numSamples, frames_ret, len(np_data), np_data[0], np_data[1], np_data[2], np_data[3]))
     
@@ -36,6 +37,12 @@ DataModeToSampleSizeDict = {
     DataModeEnumNet.Unsigned_16bit : SampleSizeNet.SampleSize16Unsigned,
     DataModeEnumNet.Signed_32bit :  SampleSizeNet.SampleSize32Signed
 }
+
+DataModeToSampleDstSizeDict = {
+    DataModeEnumNet.Unsigned_16bit : SampleDstSizeNet.SampleDstSize16,
+    DataModeEnumNet.Signed_32bit :  SampleDstSizeNet.SampleDstSize32
+}
+
 
 print("found %d devices" % (deviceList.Count))
 
@@ -75,7 +82,7 @@ if dataMode == DataModeEnumNet.Unsigned_16bit:
 else: # dataMode == DataModeEnumNet.Signed_32bit
     mChannels = device.GetChannelsInBlock(0) // 2;
 print("Number of Channels: ", mChannels)
-device.SetSelectedData(mChannels, callbackThreshold * 10, callbackThreshold, DataModeToSampleSizeDict[dataMode], block)
+device.ChannelBlock.SetSelectedData(mChannels, callbackThreshold * 10, callbackThreshold, DataModeToSampleSizeDict[dataMode], DataModeToSampleDstSizeDict[dataMode], block)
 
 device.StartDacq()
 time.sleep(2)

@@ -35,7 +35,7 @@ function run_mea(device)
         %   - number of samples per data packet. Here: 5000 = 100 ms of data
         %   - data type. Here: 16-Bit unsigned
         %   - channels in block: Here: All channels arrive in a single block
-        device.SetSelectedChannels(channelsinblock, 50000, 5000, Mcs.Usb.SampleSizeNet.SampleSize16Unsigned, channelsinblock);
+        device.ChannelBlock.SetSelectedChannels(channelsinblock, 50000, 5000, Mcs.Usb.SampleSizeNet.SampleSize16Unsigned, Mcs.Usb.SampleDstSizeNet.SampleDstSize16, channelsinblock);
 
         % Start data acquisition
         device.StartDacq();
@@ -43,11 +43,11 @@ function run_mea(device)
         x = 0;
         while 1
             for i = 0:(channelsinblock-1)
-                number = device.ChannelBlock_AvailFrames(i);
+                number = device.ChannelBlock.AvailFrames(i, -1);
                 % wait until at least 5000 samples are available
                 if number >= 5000
                     % read 5000 samples
-                    [data, read] = device.ChannelBlock_ReadFramesUI16(i, 5000);
+                    [data, read] = device.ChannelBlock.ReadFramesUI16(i, 0, 5000);
 
                     if i == 0 % selected channel
                        % Because the data is acquired in 16 Bit unsigned

@@ -1,9 +1,0 @@
-% Makes the McsUsbNet.dll visible to Matlab and initializes a device object
-% Needs to be called just once at the start
-
-assembly = NET.addAssembly([pwd '\..\..\..\McsUsbNet\x64\McsUsbNet.dll']);
-device = Mcs.Usb.CStg200xDownloadNet();
-
-% After this is finished, you may call the run_stg function:
-%
-%  run_stg(device);

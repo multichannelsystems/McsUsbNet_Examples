@@ -3,6 +3,8 @@ import os
 import clr
 import ctypes
 
+# pyright: reportMissingImports=false
+# pyright: reportUndefinedVariable=false
 from System import *
 clr.AddReference('System.Collections')
 from System.Collections.Generic import List

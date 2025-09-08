@@ -2,6 +2,8 @@ import time
 import os
 import clr
 
+# pyright: reportMissingImports=false
+# pyright: reportUndefinedVariable=false
 from System import Action
 from System import *
 

@@ -5,7 +5,7 @@ import clr
 from System import Action
 from System import *
 
-clr.AddReference(os.getcwd() + '\\..\\..\\McsUsbNet\\x64\\\McsUsbNet.dll')
+clr.AddReference(os.getcwd() + r'\..\..\McsUsbNet\x64\McsUsbNet.dll')
 from Mcs.Usb import CMcsUsbListNet
 from Mcs.Usb import DeviceEnumNet
 

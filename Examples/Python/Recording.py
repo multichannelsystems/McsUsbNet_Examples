@@ -65,7 +65,7 @@ Samplingrate = 20000;
 device.SetSamplerate(Samplingrate, 1, 0);
 
 miliGain = device.GetGain();
-voltageRanges = device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
+voltageRanges = device.HWInfo.GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
 for i in range(0, len(voltageRanges)):
     print("(" + str(i) + ") " + voltageRanges[i].VoltageRangeDisplayStringMilliVolt);
 

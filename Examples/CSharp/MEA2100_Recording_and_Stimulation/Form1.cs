@@ -244,7 +244,10 @@ namespace MEA2100_Recording_and_Stimulation
                 threshold = samplerate / 10;
                 // channelsInBlock / 2 gives the number of channels in 32bit
                 bool[] sel = Enumerable.Repeat(true, channelsInBlock / 2).ToArray();
-                dacq.ChannelBlock.SetSelectedChannels(Enumerable.Repeat(true, channelsInBlock / 2).ToArray(), queuesize, threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, channelsInBlock);
+                dacq.ChannelBlock.Init(channelsInBlock);
+                dacq.ChannelBlock.AddBlocksAndChannels(ChannelBlockTypeNet.MultipleHandlesOneQueues,
+                    Enumerable.Repeat(true, channelsInBlock / 2).ToArray(), queuesize, threshold,
+                    SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, 0, 0);
 
                 dacq.ChannelBlock.SetCommonThreshold(threshold);
 
@@ -280,13 +283,13 @@ namespace MEA2100_Recording_and_Stimulation
             //ElectrodeModeEnumNet electrodeMode = ElectrodeModeEnumNet.emManual;
             for (int i = 0; i < 60; i++)
             {
-                stg.SetElectrodeMode((uint)HeadStage, (uint)i, i == Electrode1 || i == Electrode2 ? electrodeMode : ElectrodeModeEnumNet.emAutomatic);
-                stg.SetElectrodeEnable((uint)HeadStage, (uint)i, 0, i == Electrode1 || i == Electrode2 ? true : false);
-                stg.SetElectrodeDacMux((uint)HeadStage, (uint)i, 0, 
+                stg.SetElectrodeModeHsOnScu((uint)HeadStage, (uint)i, i == Electrode1 || i == Electrode2 ? electrodeMode : ElectrodeModeEnumNet.emAutomatic);
+                stg.SetElectrodeEnableHsOnScu((uint)HeadStage, (uint)i, 0, i == Electrode1 || i == Electrode2 ? true : false);
+                stg.SetElectrodeDacMuxHsOnScu((uint)HeadStage, (uint)i, 0, 
                     i == Electrode1 ? ElectrodeDacMuxEnumNet.Stg1 : 
                     ( i == Electrode2 ? ElectrodeDacMuxEnumNet.Stg2 : ElectrodeDacMuxEnumNet.Ground));
-                stg.SetEnableAmplifierProtectionSwitch((uint)HeadStage, (uint)i, false); // Enable the switch if you want to protect the amplifier from an overload
-                stg.SetBlankingEnable((uint)HeadStage, (uint)i, false); // Choose if you want Filter blanking during stimulation for an electrode
+                stg.SetEnableAmplifierProtectionSwitchHsOnScu((uint)HeadStage, (uint)i, false); // Enable the switch if you want to protect the amplifier from an overload
+                stg.SetBlankingEnableHsOnScu((uint)HeadStage, (uint)i, false); // Choose if you want Filter blanking during stimulation for an electrode
             }
 
             stg.SetVoltageMode(0);

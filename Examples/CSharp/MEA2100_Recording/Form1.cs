@@ -58,7 +58,6 @@ namespace MEA2100_Recording_and_Stimulation
         }
 
         private int Electrode1 = 0;
-        private int Electrode2 = 1;
         private int HeadStage = 3;
 
         private int channelsInBlock = 0;
@@ -226,7 +225,10 @@ namespace MEA2100_Recording_and_Stimulation
                 int queuesize = samplerate;
                 threshold = samplerate / 10;
                 // channelsInBlock / 2 gives the number of channels in 32bit
-                dacq.ChannelBlock.SetSelectedChannels(channelsInBlock / 2, queuesize, threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, channelsInBlock);
+                dacq.ChannelBlock.Init(channelsInBlock);
+                dacq.ChannelBlock.AddBlocksAndChannels(ChannelBlockTypeNet.MultipleHandlesOneQueues,
+                    channelsInBlock / 2, queuesize, threshold, SampleSizeNet.SampleSize32Signed,
+                    SampleDstSizeNet.SampleDstSize32, 0, 0);
 
                 dacq.ChannelBlock.SetCommonThreshold(threshold);
 

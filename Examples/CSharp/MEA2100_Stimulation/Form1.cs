@@ -40,19 +40,19 @@ namespace MEA2100_Stimulation
             uint electrode = 3;
 
             // ElectrodeMode: emManual: electrode is permanently selected for stimulation
-            cStgDevice.SetElectrodeMode(electrode, ElectrodeModeEnumNet.emManual);
+            cStgDevice.SetElectrodeModeHsOnIfb(electrode, ElectrodeModeEnumNet.emManual);
 
             // ElectrodeDacMux: DAC to use for stimulation
-            cStgDevice.SetElectrodeDacMux(electrode, 0, ElectrodeDacMuxEnumNet.Stg1);
+            cStgDevice.SetElectrodeDacMuxHsOnIfb(electrode, 0, ElectrodeDacMuxEnumNet.Stg1);
 
             // ElectrodeEnable: enable electrode for stimulation
-            cStgDevice.SetElectrodeEnable(electrode, 0, true);
+            cStgDevice.SetElectrodeEnableHsOnIfb(electrode, 0, true);
 
             // BlankingEnable: false: do not blank the ADC signal while stimulation is running
-            cStgDevice.SetBlankingEnable(electrode, false);
+            cStgDevice.SetBlankingEnableHsOnIfb(electrode, false);
 
             // AmplifierProtectionSwitch: false: Keep ADC connected to electrode even while stimulation is running
-            cStgDevice.SetEnableAmplifierProtectionSwitch(electrode, false);
+            cStgDevice.SetEnableAmplifierProtectionSwitchHsOnIfb(electrode, false);
 
             // array of amplitudes and duration
             int[] amplitude = new int[2] {10000, -10000}; // µV

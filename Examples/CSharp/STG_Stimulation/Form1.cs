@@ -93,7 +93,7 @@ namespace STG_Stimulation
             device.GetCurrentRangeInNanoAmp(0);
             device.GetCurrentResolutionInNanoAmp(0);
 
-            device.SendSegmentSelect(0, Stg200xSegmentFlagsEnumNet.None);
+            device.SegmentSelect(0, Stg200xSegmentFlagsEnumNet.None);
 
             // Setup Trigger
             uint triggerInputs = device.GetNumberOfTriggerInputs();

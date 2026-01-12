@@ -208,7 +208,8 @@ namespace Feedback
                 mea.GetChannelLayout(out int analogChannels, out int digitalChannels, out int checksumChannels, out int timestampChannels, out int channelsInBlock, 0);
 
                 TotalChannels = channelsInBlock / 2;
-                mea.ChannelBlock.SetSelectedData(TotalChannels, Samplerate * 10, Threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, ChannelsInBlock);
+                mea.ChannelBlock.Init(ChannelsInBlock);
+                mea.ChannelBlock.AddBlocksAndChannels(ChannelBlockTypeNet.OneHandleOneQueue, TotalChannels, Samplerate * 10, Threshold, SampleSizeNet.SampleSize32Signed, SampleDstSizeNet.SampleDstSize32, 0, 0);
 
                 mea.ChannelBlock.SetCheckChecksum((uint)checksumChannels, (uint)timestampChannels);
 

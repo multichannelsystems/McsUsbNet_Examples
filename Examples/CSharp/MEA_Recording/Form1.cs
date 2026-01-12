@@ -154,7 +154,7 @@ namespace MEA_Recording
 
             device.SetDataMode(dataMode, 0);
 
-            device.HWInfo().GetNumberOfHWADCChannels(out int hwchannels);
+            device.HWInfo.GetNumberOfHWADCChannels(out int hwchannels);
             tbDeviceInfo.Text += @"Number of Hardware channels: " + hwchannels.ToString("D") + Environment.NewLine;
 
             if (hwchannels == 0)
@@ -172,7 +172,7 @@ namespace MEA_Recording
 
             if (miliGain > 0)
             {
-                var voltageRanges = device.HWInfo().GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
+                var voltageRanges = device.HWInfo.GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(miliGain);
                 for (int i = 0; i < voltageRanges.Count; i++)
                 {
                     tbDeviceInfo.Text += @"(" + i.ToString("D") + @") " + voltageRanges[i].VoltageRangeDisplayStringMilliVolt + Environment.NewLine;
@@ -212,12 +212,18 @@ namespace MEA_Recording
 
             // queue size and threshold should be selected carefully
             if (dataSelectionMethod == DataSelectionMethod.SetSelectedData)
-            {
-                device.ChannelBlock.SetSelectedData(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], DataModeToSampleDstSizeDict[dataMode], block);
+            { 
+                device.ChannelBlock.Init(block);
+                device.ChannelBlock.AddBlocksAndChannels(ChannelBlockTypeNet.OneHandleOneQueue, mChannels,
+                    10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode],
+                    DataModeToSampleDstSizeDict[dataMode], 0, 0);
             }
             else // (dataSelectionMethod == DataSelectionMethod.SetSelectedChannels)
             {
-                device.ChannelBlock.SetSelectedChannels(mChannels, 10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode], DataModeToSampleDstSizeDict[dataMode], block);
+                device.ChannelBlock.Init(block);
+                device.ChannelBlock.AddBlocksAndChannels(ChannelBlockTypeNet.MultipleHandlesOneQueues, mChannels,
+                    10 * callbackThreshold, callbackThreshold, DataModeToSampleSizeDict[dataMode],
+                    DataModeToSampleDstSizeDict[dataMode], 0, 0);
 
                 if (useCommonThreshold)
                 {
@@ -256,7 +262,7 @@ namespace MEA_Recording
 
         private void TimerTickForChannelData()
         {
-            uint frames = device.ChannelBlock.AvailFrames(0, 0);
+            int frames = device.ChannelBlock.AvailFrames(0, 0);
             if ((LastData || frames > callbackThreshold) && frames > 0)
             {
                 device.ChannelBlock.GetChannel(0, 0, 0, out int totalChannels, out int byte_offset, out int channel_offset, out int channels);
@@ -293,7 +299,7 @@ namespace MEA_Recording
 
         private void TimerTickWithoutChannelData()
         {
-            uint frames = 0;
+            int frames = 0;
             if (useCommonThreshold)
             {
                 frames = device.ChannelBlock.AvailFrames(-1, -1);
